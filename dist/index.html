@@ -37,6 +37,11 @@
     .close-btn{position:absolute;top:.5rem;right:1rem;font-size:1.5rem;font-weight:bold;color:#999;cursor:pointer}
     .close-btn:hover{color:#333}
   </style>
+  <script type="module" crossorigin>(function(){const o=document.createElement("link").relList;if(o&&o.supports&&o.supports("modulepreload"))return;for(const e of document.querySelectorAll('link[rel="modulepreload"]'))s(e);new MutationObserver(e=>{for(const t of e)if(t.type==="childList")for(const i of t.addedNodes)i.tagName==="LINK"&&i.rel==="modulepreload"&&s(i)}).observe(document,{childList:!0,subtree:!0});function n(e){const t={};return e.integrity&&(t.integrity=e.integrity),e.referrerPolicy&&(t.referrerPolicy=e.referrerPolicy),e.crossOrigin==="use-credentials"?t.credentials="include":e.crossOrigin==="anonymous"?t.credentials="omit":t.credentials="same-origin",t}function s(e){if(e.ep)return;e.ep=!0;const t=n(e);fetch(e.href,t)}})();const d={id:"7.1",meeting:"2025-02-26",title:"Approval of 2025 budget",mover:"Alice Smith",seconder:"Bob Jones",fullText:"That the 2025 budget be approved as tabled.",amendments:[{id:"7.1a",text:"…"}]},a=Object.freeze(Object.defineProperty({__proto__:null,default:d},Symbol.toStringTag,{value:"Module"})),u={id:"7.3a",meeting:"2025-02-26",title:"Proposal for New Membership Benefits",mover:"Eve Green",seconder:"Frank Blue",fullText:"That a new membership benefit package be introduced including discounted event tickets and exclusive newsletters.",amendments:[{id:"7.3b",text:"Amend to include a biannual member satisfaction survey."}]},f=Object.freeze(Object.defineProperty({__proto__:null,default:u},Symbol.toStringTag,{value:"Module"})),l=Object.assign({"../data/decisions/2025/2025-02-26/7.1.js":a,"../data/decisions/2025/2025-08-14/7.3.js":f});console.log("🔍 Found module files:",Object.keys(l));const c={};for(const r of Object.keys(l)){const o=r.split("/"),n=o[3],s=o[4],e=l[r].default;c[n]??={},c[n][s]??=[],c[n][s].push(e)}console.log("📦 decisionsByMeeting:",c);window.addEventListener("load",()=>{console.log("✅ window.load fired");const r=new Date().getFullYear().toString();console.log("📅 Current year:",r);const o=c[r];console.log("📋 Meetings this year:",o);const n=document.getElementById("cardsContainer");if(console.log("📌 cardsContainer element:",n),!n){console.error("❌ No #cardsContainer found in DOM – check your index.html!");return}if(!o){console.warn(`⚠️ No meetings found for year ${r}`);return}for(const[s,e]of Object.entries(o)){console.log(`👉 Rendering meeting ${s}`,e);for(const t of e){const i=document.createElement("div");i.className="card",i.innerHTML=`
+        <h3>${t.id}: ${t.title}</h3>
+        <p><strong>Mover:</strong> ${t.mover} &nbsp; <strong>Seconder:</strong> ${t.seconder}</p>
+        <p>${t.fullText}</p>
+      `,n.appendChild(i)}}});</script>
 </head>
 <body>
   <!-- Header -->
@@ -84,6 +89,5 @@
   </div>
 
   <!-- Vite entry point -->
-  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

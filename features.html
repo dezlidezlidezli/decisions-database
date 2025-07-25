@@ -45,7 +45,6 @@
       <a href="#" class="logo">ANUSA Tracker</a>
     </div>
   </header>
-
   <!-- Filters -->
   <div class="filters">
     <input type="text" id="searchInput" placeholder="Search decisions…">
@@ -61,12 +60,10 @@
       <option value="Failed">Failed</option>
     </select>
   </div>
-
   <!-- Main Cards -->
   <main>
     <div class="cards-container" id="cardsContainer"></div>
   </main>
-
   <!-- Detail Modal -->
   <div class="modal" id="detailModal">
     <div class="modal-content">
@@ -82,8 +79,86 @@
       </ul>
     </div>
   </div>
+    <!-- Dynamic recursive loader: go year by year back from current year -->
+  <script>
+    window.decisions = [];
+    function loadScript(src) {
+      return new Promise(res => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => res(true);
+        s.onerror = () => res(false);
+        document.head.appendChild(s);
+      });
+    }
+    async function loadAll() {
+      let year = new Date().getFullYear();
+      // Walk backwards until no more meetings-manifest.js
+      while (await loadScript(`data/decisions/${year}/meetings-manifest.js`)) {
+        const meetings = (window.meetingsByYear && window.meetingsByYear[year]) || [];
+        for (const meeting of meetings) {
+          await loadScript(`data/decisions/${year}/${meeting}/manifest.js`);
+          const files = (window.decisionFilesByMeeting && window.decisionFilesByMeeting[meeting]) || [];
+          for (const id of files) {
+            await loadScript(`data/decisions/${year}/${meeting}/${id}.js`);
+          }
+        }
+        year--;
+      }
+      renderCards();
+    }
+    document.addEventListener('DOMContentLoaded', loadAll);
+  </script>
+  <!-- UI Logic -->
+  <script>
+    const cardsContainer = document.getElementById('cardsContainer');
+    const searchInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const detailModal = document.getElementById('detailModal');
+    const modalClose = document.getElementById('modalClose');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailSummary = document.getElementById('detailSummary');
+    const detailMover = document.getElementById('detailMover');
+    const detailSeconder = document.getElementById('detailSeconder');
+    const detailMeeting = document.getElementById('detailMeeting');
+    const detailFullText = document.getElementById('detailFullText');
+    const detailAmendmentsList = document.getElementById('detailAmendmentsList');
 
-  <!-- Vite entry point -->
-  <script type="module" src="/src/main.js"></script>
+    function renderCards(filter=''){
+      cardsContainer.innerHTML='';
+      window.decisions.filter(d=>
+        (d.title.toLowerCase().includes(filter)||
+         (d.preamble||d.summary).toLowerCase().includes(filter))&&
+        (!typeFilter.value||d.type===typeFilter.value)&&
+        (!statusFilter.value||d.status===statusFilter.value)
+      ).forEach(d=>{
+        const card=document.createElement('div');card.className='card';
+        card.innerHTML=`<h3>${d.title}</h3><p>${d.summary}</p><p class="card-meta">Mover: ${d.mover} | Seconder: ${d.seconder}</p>`;
+        card.addEventListener('click',()=>openDetail(d));
+        cardsContainer.appendChild(card);
+      });
+    }
+    function openDetail(d){
+      detailTitle.textContent=d.title;
+      detailSummary.textContent=d.preamble||d.summary;
+      detailMover.textContent=d.mover;
+      detailSeconder.textContent=d.seconder;
+      detailMeeting.textContent=d.meeting;
+      detailFullText.textContent=d.fullText;
+      detailAmendmentsList.innerHTML='';
+      (d.amendments||[]).forEach(a=>{
+        const li=document.createElement('li');
+        const span=document.createElement('span');span.className='amendment-status '+(a.passed?'passed':'failed');span.textContent=a.passed?'✓':'✗';
+        li.appendChild(span);li.append(` ${a.text}`);
+        detailAmendmentsList.appendChild(li);
+      });
+      detailModal.style.display='flex';
+    }
+    function closeDetail(){detailModal.style.display='none'}
+    modalClose.addEventListener('click',closeDetail);
+    window.addEventListener('click',e=>{if(e.target===detailModal)closeDetail()});
+    [searchInput,typeFilter,statusFilter].forEach(el=>el.addEventListener('input',()=>renderCards(searchInput.value.trim().toLowerCase())));
+  </script>
 </body>
 </html>

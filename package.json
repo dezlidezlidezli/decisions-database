@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev":     "vite",
-    "build":   "vite aoeu",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "vite": "^7.0.6"
+    "vite": "^7.0.6",
+    "vite-plugin-singlefile": "^2.3.0"
   }
 }
