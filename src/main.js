@@ -25,7 +25,13 @@ function allDecisionsByMeeting() {
   const entries = [];
   for (const year of Object.keys(decisionsByMeeting).sort().reverse()) {
     for (const meeting of Object.keys(decisionsByMeeting[year]).sort().reverse()) {
-      entries.push({ meeting, decisions: decisionsByMeeting[year][meeting] });
+        const sorted = [...decisionsByMeeting[year][meeting]].sort((a, b) => {
+        const parts = id => id.split('-').pop().split('.').map(Number);
+        const [am, an] = parts(a.id);
+        const [bm, bn] = parts(b.id);
+        return am !== bm ? am - bm : an - bn;
+      });
+      entries.push({ meeting, decisions: sorted });
     }
   }
   return entries;
