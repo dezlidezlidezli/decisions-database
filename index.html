@@ -377,7 +377,26 @@
       .detail-meta-grid {
         grid-template-columns: 1fr 1fr;
       }
+      .detail-meta-grid .meta-item:first-child {
+        grid-column: 1 / -1;
+      }
     }
+
+    /* ── Meeting motion rows ── */
+    .meeting-motion-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .65rem .5rem;
+      border-bottom: 1px solid #f0f0f0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .meeting-motion-row:last-child { border-bottom: none; }
+    .meeting-motion-row:hover { background: #f0f7f4; }
+    .meeting-motion-row:hover .meeting-motion-arrow { opacity: 1; }
+    .meeting-motion-arrow { font-size: .8rem; color: #00663e; opacity: 0; transition: opacity .1s; margin-left: auto; flex-shrink: 0; }
 
     /* ── Mobile layout ── */
     @media (max-width: 640px) {
@@ -455,7 +474,7 @@
     <div class="detail-panel mobile-hidden" id="detailPanel">
       <button class="back-btn" id="backBtn">← All decisions</button>
       <div id="detailBody">
-        <div class="detail-empty">Select a decision to view details</div>
+        <div class="detail-empty">Select a meeting or decision to view details</div>
       </div>
     </div>
   </div>

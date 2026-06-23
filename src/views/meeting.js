@@ -39,9 +39,10 @@ export function renderMeeting(meetingDate, decisions, { onDecisionClick }) {
       <div class="meeting-motions-list">
         ${decisions.map(d => `
           <div class="meeting-motion-row js-motion-row" data-id="${d.id}" data-meeting="${meetingDate}">
-            <span class="row-id" style="min-width:40px;font-size:.7rem;color:#999;font-weight:600">${d.id}</span>
-            <span style="flex:1;font-size:.875rem;color:#333">${d.title}</span>
+            <span class="row-id" style="min-width:36px;flex-shrink:0">${d.id}</span>
+            <span style="flex:1;font-size:.875rem;color:#333;line-height:1.4">${d.title}</span>
             ${badge(d.status, statusClass(d.status))}
+            <span class="meeting-motion-arrow">→</span>
           </div>`).join('')}
       </div>
     </div>`;
