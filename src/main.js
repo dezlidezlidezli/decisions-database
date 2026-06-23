@@ -18,8 +18,22 @@ let navStack = [];
 const currentView = () => navStack[navStack.length - 1] ?? null;
 const isMobile    = () => window.innerWidth <= 640;
 
+// ── Back button label ─────────────────────────────────────────────────────────
+function updateBackBtn() {
+  const prev = navStack[navStack.length - 2] ?? null;
+  if (!prev) {
+    backBtn.textContent = '← All decisions';
+  } else if (prev.type === 'meeting') {
+    const meta = meetingMeta[prev.meetingDate];
+    backBtn.textContent = '← ' + (meta ? meta.name : prev.meetingDate);
+  } else {
+    backBtn.textContent = '← ' + prev.decision.id + ' ' + prev.decision.title;
+  }
+}
+
 // ── Panel visibility ──────────────────────────────────────────────────────────
 function syncPanels() {
+  updateBackBtn();
   const hasView = navStack.length > 0;
   if (isMobile()) {
     listPanel.classList.toggle('mobile-hidden', hasView);
