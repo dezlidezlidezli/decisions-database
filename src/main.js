@@ -25,18 +25,12 @@ let activeId = null;
 const isMobile = () => window.innerWidth <= 640;
 
 function showDetail() {
-  if (isMobile()) {
-    listPanel.classList.add('mobile-hidden');
-    detailPanel.classList.remove('mobile-hidden');
-    window.scrollTo(0, 0);
-  }
+  syncPanelVisibility();
+  if (isMobile()) window.scrollTo(0, 0);
 }
 
 function showList() {
-  if (isMobile()) {
-    detailPanel.classList.add('mobile-hidden');
-    listPanel.classList.remove('mobile-hidden');
-  }
+  syncPanelVisibility();
 }
 
 backBtn.addEventListener('click', () => {
@@ -187,8 +181,25 @@ searchInput.addEventListener('input', renderList);
 typeFilter.addEventListener('change', renderList);
 statusFilter.addEventListener('change', renderList);
 
+function syncPanelVisibility() {
+  if (isMobile()) {
+    if (activeId) {
+      listPanel.classList.add('mobile-hidden');
+      detailPanel.classList.remove('mobile-hidden');
+    } else {
+      listPanel.classList.remove('mobile-hidden');
+      detailPanel.classList.add('mobile-hidden');
+    }
+  } else {
+    listPanel.classList.remove('mobile-hidden');
+    detailPanel.classList.remove('mobile-hidden');
+  }
+}
+
+window.addEventListener('resize', syncPanelVisibility);
+
 window.addEventListener('load', () => {
-  if (!isMobile()) detailPanel.classList.remove('mobile-hidden');
+  syncPanelVisibility();
   renderList();
 });
 
