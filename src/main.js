@@ -1,98 +1,110 @@
-import { marked } from 'marked';
+import { allGroups, meetingMeta, badge, statusClass } from './data.js';
+import { renderDetail }  from './views/detail.js';
+import { renderMeeting } from './views/meeting.js';
 
-marked.setOptions({ breaks: true });
-
-const modules = import.meta.glob('../data/decisions/*/*/*.js', { eager: true });
-const meetingModules = import.meta.glob('../data/decisions/*/*/_meeting.js', { eager: true });
-
-// Build meetingMeta: { "2025-02-26": { name, date, location, duration, minutesUrl } }
-const meetingMeta = {};
-for (const [path, mod] of Object.entries(meetingModules)) {
-  const parts = path.split('/');
-  const meetingDate = parts[4];
-  meetingMeta[meetingDate] = mod.default;
-}
-
-// Build { year: { meeting: [decisions] } } — skip _meeting.js files
-const decisionsByMeeting = {};
-for (const path of Object.keys(modules)) {
-  if (path.includes('/_meeting.js')) continue;
-  const parts = path.split('/');
-  const year = parts[3];
-  const meeting = parts[4];
-  const decision = modules[path].default;
-  decisionsByMeeting[year] ||= {};
-  decisionsByMeeting[year][meeting] ||= [];
-  decisionsByMeeting[year][meeting].push(decision);
-}
-
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 const listPanel    = document.getElementById('listPanel');
 const detailPanel  = document.getElementById('detailPanel');
+const detailBody   = document.getElementById('detailBody');
+const backBtn      = document.getElementById('backBtn');
 const searchInput  = document.getElementById('searchInput');
 const typeFilter   = document.getElementById('typeFilter');
 const statusFilter = document.getElementById('statusFilter');
-const backBtn      = document.getElementById('backBtn');
-const detailBody   = document.getElementById('detailBody');
 
-let activeKey = null; // "meetingDate/id" for uniqueness across meetings
+// ── Navigation state ──────────────────────────────────────────────────────────
+// Stack entries: { type: 'meeting'|'decision', meetingDate, decision? }
+let navStack = [];
 
-const isMobile = () => window.innerWidth <= 640;
+const currentView = () => navStack[navStack.length - 1] ?? null;
+const isMobile    = () => window.innerWidth <= 640;
 
-function showDetail() {
-  syncPanelVisibility();
+// ── Panel visibility ──────────────────────────────────────────────────────────
+function syncPanels() {
+  const hasView = navStack.length > 0;
+  if (isMobile()) {
+    listPanel.classList.toggle('mobile-hidden', hasView);
+    detailPanel.classList.toggle('mobile-hidden', !hasView);
+  } else {
+    listPanel.classList.remove('mobile-hidden');
+    detailPanel.classList.remove('mobile-hidden');
+  }
+}
+
+window.addEventListener('resize', syncPanels);
+
+// ── Back button ───────────────────────────────────────────────────────────────
+// Pop the stack: if something remains below, re-render that view; else show list.
+backBtn.addEventListener('click', () => {
+  navStack.pop();
+  const prev = currentView();
+  if (prev) {
+    _paint(prev);
+    renderList();
+  } else {
+    detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details</div>';
+    renderList();
+  }
+  syncPanels();
+  if (isMobile()) window.scrollTo(0, 0);
+});
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function navigateTo(view) {
+  navStack.push(view);
+  _paint(view);
+  renderList();
+  syncPanels();
   if (isMobile()) window.scrollTo(0, 0);
 }
 
-function showList() {
-  syncPanelVisibility();
-}
-
-backBtn.addEventListener('click', () => {
-  activeKey = null;
-  renderList();
-  showList();
-});
-
-function allDecisionsByMeeting() {
-  // Returns [ { meeting, decisions[] } ] sorted by meeting date desc
-  const entries = [];
-  for (const year of Object.keys(decisionsByMeeting).sort().reverse()) {
-    for (const meeting of Object.keys(decisionsByMeeting[year]).sort().reverse()) {
-        const sorted = [...decisionsByMeeting[year][meeting]].sort((a, b) => {
-        const parts = id => id.split('.').map(Number);
-        const [am, an] = parts(a.id);
-        const [bm, bn] = parts(b.id);
-        return am !== bm ? am - bm : an - bn;
-      });
-      entries.push({ meeting, decisions: sorted });
-    }
+function _paint(view) {
+  let node;
+  if (view.type === 'meeting') {
+    const groups = allGroups();
+    const group  = groups.find(g => g.meeting === view.meetingDate);
+    node = renderMeeting(view.meetingDate, group?.decisions ?? [], {
+      onDecisionClick: (d, meetingDate) =>
+        navigateTo({ type: 'decision', meetingDate, decision: d }),
+    });
+  } else {
+    node = renderDetail(view.decision, view.meetingDate, {
+      onMeetingClick: (meetingDate) =>
+        navigateTo({ type: 'meeting', meetingDate }),
+    });
   }
-  return entries;
+  detailBody.innerHTML = '';
+  detailBody.appendChild(node);
 }
 
+// ── List rendering ────────────────────────────────────────────────────────────
 function filterDecisions(decisions) {
-  const raw = searchInput.value.trim().toLowerCase();
+  const raw    = searchInput.value.trim().toLowerCase();
   const tokens = raw.replace(/[-\W]+/g, ' ').trim().split(/\s+/).filter(Boolean);
-  const typeVal   = typeFilter.value;
-  const statusVal = statusFilter.value;
+  const typeVal    = typeFilter.value;
+  const statusVal  = statusFilter.value;
 
   return decisions.filter(d => {
-    const haystack = [d.id, d.title, d.summary, d.preamble, d.mover, d.seconder, d.fullText,
+    if (typeVal   && d.type   !== typeVal)   return false;
+    if (statusVal && d.status !== statusVal) return false;
+    if (!tokens.length) return true;
+    const hay = [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
       ...(d.amendments || []).map(a => a.text)]
       .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ');
-    return tokens.every(t => haystack.includes(t))
-      && (!typeVal   || d.type   === typeVal)
-      && (!statusVal || d.status === statusVal);
+    return tokens.every(t => hay.includes(t));
   });
 }
 
-function badge(text, cls) {
-  return `<span class="badge ${cls}">${text}</span>`;
+function activeKeyFor(view) {
+  if (!view) return null;
+  return view.type === 'meeting'
+    ? 'm/' + view.meetingDate
+    : 'd/' + view.meetingDate + '/' + view.decision.id;
 }
 
 function renderList() {
   listPanel.innerHTML = '';
-  const groups = allDecisionsByMeeting();
+  const groups = allGroups();
+  const active = activeKeyFor(currentView());
   let anyResults = false;
 
   for (const { meeting, decisions } of groups) {
@@ -100,32 +112,30 @@ function renderList() {
     if (!filtered.length) continue;
     anyResults = true;
 
+    const meta       = meetingMeta[meeting];
+    const meetingKey = 'm/' + meeting;
+
     const heading = document.createElement('div');
-    heading.className = 'meeting-heading';
-    const meta = meetingMeta[meeting];
-    heading.textContent = meta ? `${meta.name} — ${meta.date}` : meeting;
+    heading.className = 'meeting-heading' + (active === meetingKey ? ' active' : '');
+    heading.innerHTML = `<span class="meeting-heading-name">${meta ? meta.name : meeting}</span><span class="meeting-heading-arrow">›</span>`;
+    heading.addEventListener('click', () => navigateTo({ type: 'meeting', meetingDate: meeting }));
     listPanel.appendChild(heading);
 
     for (const d of filtered) {
+      const key = 'd/' + meeting + '/' + d.id;
       const row = document.createElement('div');
-      const key = meeting + '/' + d.id;
-      row.className = 'decision-row' + (key === activeKey ? ' active' : '');
-      row.dataset.id = d.id;
+      row.className = 'decision-row' + (key === active ? ' active' : '');
       row.innerHTML = `
         <div class="row-id">${d.id}</div>
         <div class="row-body">
           <div class="row-title">${d.title}</div>
           <div class="row-meta">
             ${badge(d.type, 'badge-type')}
-            ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
+            ${badge(d.status, statusClass(d.status))}
           </div>
         </div>`;
-      row.addEventListener('click', () => {
-        activeKey = meeting + '/' + d.id;
-        renderList();
-        renderDetail(d, meeting);
-        showDetail();
-      });
+      row.addEventListener('click', () =>
+        navigateTo({ type: 'decision', meetingDate: meeting, decision: d }));
       listPanel.appendChild(row);
     }
   }
@@ -135,107 +145,13 @@ function renderList() {
   }
 }
 
-function renderDetail(d, meetingDate) {
-  const meta = meetingMeta[meetingDate] || {};
-
-  // Preamble — render as markdown
-  const preambleHtml = d.preamble ? marked.parse(d.preamble) : '';
-
-  // Full text — render as markdown
-  const fullTextHtmlContent = d.fullText ? marked.parse(d.fullText) : '';
-
-  // Meeting meta row
-  const meetingLabel = meta.name ? `${meta.name}${meta.date ? ` — ${meta.date}` : ''}` : (meetingDate || '—');
-  const minutesLink = meta.minutesUrl
-    ? `<a href="${meta.minutesUrl}" target="_blank" rel="noopener" class="minutes-link">View minutes ↗</a>`
-    : '';
-
-  // Amendments
-  const amendmentsHtml = (d.amendments || []).map(a => {
-    const fullTextHtml = a.fullText
-      ? `<div class="amendment-full-text">${marked.parse(a.fullText)}</div>` : '';
-    const movers = [a.mover, a.seconder].filter(Boolean).join(' / ');
-    const moversHtml = movers
-      ? `<div class="amendment-movers">${movers}</div>` : '';
-    return `
-    <li class="amendment-item">
-      <div class="amendment-main">
-        <div class="amendment-top">
-          <span class="badge ${a.friendly ? 'badge-friendly' : 'badge-unfriendly'}">${a.friendly ? 'Friendly' : 'Unfriendly'}</span>
-          <span class="amendment-text">${a.text}</span>
-          <span class="amendment-result ${a.passed ? 'passed' : 'failed'}">${a.passed ? '✓ Passed' : '✗ Failed'}</span>
-        </div>
-        ${fullTextHtml}
-        ${moversHtml}
-      </div>
-    </li>`;
-  }).join('');
-
-  detailBody.innerHTML = `
-    <div class="detail-content">
-      <div class="detail-header">
-        <div class="detail-id">${meetingDate} · ${d.id}</div>
-        <div class="detail-title">${d.title}</div>
-        <div class="detail-badges">
-          ${badge(d.type, 'badge-type')}
-          ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
-        </div>
-      </div>
-
-      <div class="detail-meta-grid">
-        <div class="meta-item">
-          <div class="meta-label">Meeting</div>
-          <div class="meta-value">${meetingLabel}${minutesLink ? `<br>${minutesLink}` : ''}</div>
-        </div>
-        <div class="meta-item"><div class="meta-label">Mover</div><div class="meta-value">${d.mover || '—'}</div></div>
-        <div class="meta-item"><div class="meta-label">Seconder</div><div class="meta-value">${d.seconder || '—'}</div></div>
-        ${meta.location ? `<div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">${meta.location}</div></div>` : ''}
-        ${meta.duration ? `<div class="meta-item"><div class="meta-label">Duration</div><div class="meta-value">${meta.duration}</div></div>` : ''}
-      </div>
-
-      ${preambleHtml ? `
-      <div class="detail-section">
-        <div class="detail-section-title">Background</div>
-        <div class="markdown-body">${preambleHtml}</div>
-      </div>` : ''}
-
-      ${fullTextHtmlContent ? `
-      <div class="detail-section">
-        <div class="detail-section-title">Action</div>
-        <div class="markdown-body">${fullTextHtmlContent}</div>
-      </div>` : ''}
-
-      ${amendmentsHtml ? `
-      <div class="detail-section">
-        <div class="detail-section-title">Amendments</div>
-        <ul class="amendments-list">${amendmentsHtml}</ul>
-      </div>` : ''}
-    </div>`;
-}
-
-searchInput.addEventListener('input', renderList);
-typeFilter.addEventListener('change', renderList);
+// ── Filters ───────────────────────────────────────────────────────────────────
+searchInput.addEventListener('input',   renderList);
+typeFilter.addEventListener('change',   renderList);
 statusFilter.addEventListener('change', renderList);
 
-function syncPanelVisibility() {
-  if (isMobile()) {
-    if (activeId) {
-      listPanel.classList.add('mobile-hidden');
-      detailPanel.classList.remove('mobile-hidden');
-    } else {
-      listPanel.classList.remove('mobile-hidden');
-      detailPanel.classList.add('mobile-hidden');
-    }
-  } else {
-    listPanel.classList.remove('mobile-hidden');
-    detailPanel.classList.remove('mobile-hidden');
-  }
-}
-
-window.addEventListener('resize', syncPanelVisibility);
-
+// ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  syncPanelVisibility();
+  syncPanels();
   renderList();
 });
-
