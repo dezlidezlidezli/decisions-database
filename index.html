@@ -3,269 +3,353 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Meeting Decisions Database</title>
+  <title>ANUSA Decisions Database</title>
   <style>
-    /* General Reset */
-    * { box-sizing:border-box; margin:0; padding:0 }
-    body { font-family:Arial,sans-serif; background:#f9f9f9; color:#333 }
-#detailSummary {
-  white-space: pre-wrap;
-    margin-bottom: 1rem;
+    * { box-sizing: border-box; margin: 0; padding: 0 }
 
-}
-
-#detailSummary p {
-  margin-bottom: 1rem;
-}
-
-    /* Header */
-    .site-header {
-      background:#fff;
-      box-shadow:0 2px 4px rgba(0,0,0,0.1);
-      position:sticky; top:0; z-index:1000;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .site-header .container {
-      max-width:1200px;
-      margin:0 auto;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:.5rem 1rem;
+
+    /* ── Header ── */
+    .site-header {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0 1.5rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      z-index: 100;
     }
     .site-header .logo {
-      font-size:1.25rem;
-      font-weight:bold;
-      color:#00663e;
-      text-decoration:none;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #00663e;
+      text-decoration: none;
+      letter-spacing: -0.3px;
     }
 
-    /* Filters */
+    /* ── Filters bar ── */
     .filters {
-      display:flex;
-      max-width:1200px;
-      margin:1rem auto;
-      padding:0 1rem;
-      gap:1rem;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: .6rem 1.5rem;
+      display: flex;
+      gap: .75rem;
+      flex-shrink: 0;
     }
     .filters input,
     .filters select {
-      flex:1;
-      padding:.5rem;
-      font-size:.9rem;
+      padding: .45rem .7rem;
+      font-size: .875rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: #fafafa;
+      color: #333;
+      outline: none;
+    }
+    .filters input { flex: 2 }
+    .filters select { flex: 1 }
+    .filters input:focus,
+    .filters select:focus { border-color: #00663e; background: #fff }
+
+    /* ── Split layout ── */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
     }
 
-    /* Cards grid */
-    main {
-      max-width:1200px;
-      margin:0 auto 2rem;
-      padding:0 1rem;
-    }
-    .cards-container {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-      gap:1rem;
-    }
-    .card {
-      background:#fff;
-      border-radius:6px;
-      box-shadow:0 1px 3px rgba(0,0,0,0.1);
-      padding:1rem;
-      cursor:pointer;
-      transition:transform .2s;
-    }
-    .card:hover { transform:translateY(-2px) }
-    .card h3 { font-size:1.1rem; margin-bottom:.5rem; color:#00663e }
-    .card p  { font-size:.9rem; color:#555; margin-bottom:.5rem }
-    .card-meta {
-      font-size:.8rem;
-      color:#777;
-      margin-top:.25rem;
+    /* ── Left panel: list ── */
+    .list-panel {
+      width: 380px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      border-right: 1px solid #e0e0e0;
+      background: #fff;
     }
 
-    /* Modal */
+    .meeting-group { }
+    .meeting-heading {
+      position: sticky;
+      top: 0;
+      background: #f4f5f7;
+      border-bottom: 1px solid #e0e0e0;
+      border-top: 1px solid #e0e0e0;
+      padding: .4rem 1rem;
+      font-size: .75rem;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .decision-row {
+      padding: .8rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background .1s;
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+    }
+    .decision-row:hover { background: #f0f7f4 }
+    .decision-row.active { background: #e6f4ed; border-left: 3px solid #00663e }
+
+    .row-id {
+      font-size: .7rem;
+      color: #999;
+      font-weight: 600;
+      white-space: nowrap;
+      padding-top: 2px;
+      min-width: 60px;
+    }
+    .row-body { flex: 1; min-width: 0 }
+    .row-title {
+      font-size: .9rem;
+      font-weight: 600;
+      color: #00663e;
+      line-height: 1.3;
+      margin-bottom: .25rem;
+    }
+    .row-meta {
+      display: flex;
+      gap: .4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: .15em .5em;
+      border-radius: 4px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+    .badge-type {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    .badge-passed {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .badge-friendly {
+      background: #e0f8e9;
+      color: #047a37;
+    }
+    .badge-unfriendly {
+      background: #fde0e0;
+      color: #a30e0e;
+    }
+
+    /* ── Right panel: detail ── */
+    .detail-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 2.5rem;
+      background: #f4f5f7;
+    }
+
+    .detail-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 1rem;
+    }
+
+    .detail-content { max-width: 720px }
+
+    .detail-header {
+      margin-bottom: 1.5rem;
+    }
+    .detail-id {
+      font-size: .8rem;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: .4rem;
+    }
+    .detail-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00663e;
+      line-height: 1.25;
+      margin-bottom: .75rem;
+    }
+    .detail-badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem }
+
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: .5rem 1.5rem;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .meta-item { }
+    .meta-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #999;
+      font-weight: 600;
+      margin-bottom: .15rem;
+    }
+    .meta-value { font-size: .9rem; color: #333 }
+
+    .detail-section {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .detail-section-title {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #999;
+      font-weight: 700;
+      margin-bottom: .75rem;
+    }
+    .detail-preamble {
+      font-size: .9rem;
+      color: #555;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .detail-preamble p { margin-bottom: .75rem }
+    .detail-preamble p:last-child { margin-bottom: 0 }
+
+    .full-text-list {
+      list-style: decimal;
+      padding-left: 1.25rem;
+    }
+    .full-text-list li {
+      font-size: .9rem;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: .5rem;
+    }
+    .full-text-list li:last-child { margin-bottom: 0 }
+
+    .amendments-list { list-style: none }
+    .amendment-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: .875rem;
+    }
+    .amendment-item:last-child { border-bottom: none }
+    .amendment-text { flex: 1; color: #444 }
+    .amendment-result {
+      font-weight: 700;
+      font-size: .8rem;
+    }
+    .amendment-result.passed { color: #166534 }
+    .amendment-result.failed { color: #991b1b }
+
+    /* ── Disclaimer modal ── */
     .modal {
-      display:none;
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.6);
-      align-items:center; justify-content:center;
-      padding:1rem;
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
     }
-.modal-content {
-  background:#fff;
-  border-radius:6px;
-  width:100%; max-width:600px;
-  padding:1.5rem 1.5rem 2rem 1.5rem; /* top, right, bottom, left */
-  position:relative;
-  box-shadow:0 4px 20px rgba(0,0,0,0.2);
-}
-    .modal-content h2 {
-      font-size:1.5rem; margin-bottom:.5rem; color:#00663e;
+    .modal-content {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.75rem;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      position: relative;
     }
-    .modal-content p { font-size:.95rem; color:#555; }
-    .modal-content ul { list-style:none; margin-top:1rem; padding-left:0 }
-    .modal-content li {
-      margin-bottom:.5rem; font-size:.9rem; display:flex; align-items:center;
-    }
-    .modal-content strong { display:inline-block; width:120px }
-    .amendment-status {
-      display:inline-block;
-      width:1em; text-align:center; font-weight:bold;
-      margin-right:.5rem;
-    }
-.full-text-container li {
-  display: list-item;       /* restore markers */
-  margin-bottom: 0.4rem;    /* your original spacing */
-}
-.full-text-container ol {
-  list-style-type: decimal; /* ensure numeric markers */
-  margin: 0.5rem 0 0.5rem 1.2rem; /* indent like you want */
-  padding-left: 0;
-}
-    .amendment-status.passed { color:green }
-    .amendment-status.failed { color:red }
+    .modal-content h2 { font-size: 1.2rem; color: #00663e; margin-bottom: .75rem }
+    .modal-content p { font-size: .9rem; color: #555; line-height: 1.6; margin-bottom: 1rem; white-space: pre-wrap }
     .close-btn {
-      position:absolute;
-      top:.5rem; right:1rem;
-      font-size:1.5rem; font-weight:bold;
-      color:#999; cursor:pointer;
+      position: absolute; top: .75rem; right: 1rem;
+      font-size: 1.4rem; font-weight: bold; color: #aaa; cursor: pointer;
     }
-    .close-btn:hover { color:#333 }
-
-    /* — New: Amendment type badges — */
-    .amendment-type {
-      display:inline-block;
-      padding:0.2em 0.5em;
-      border-radius:4px;
-      font-size:.75rem;
-      margin-left:.5rem;
-      vertical-align:middle;
+    .close-btn:hover { color: #333 }
+    .btn-primary {
+      background: #00663e; color: #fff;
+      border: none; border-radius: 6px;
+      padding: .5rem 1rem; font-size: .9rem;
+      cursor: pointer;
     }
-    .amendment-type.friendly {
-      background:#e0f8e9;
-      color:#047a37;
+    .btn-primary:hover { background: #004f2f }
+
+    /* ── Empty state ── */
+    .no-results {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: #aaa;
+      font-size: .9rem;
     }
-    .amendment-type.unfriendly {
-      background:#fde0e0;
-      color:#a30e0e;
-    }
-    /* — end new badge styles — */
-    /* Apply flex only to the amendment list items */
-#detailAmendmentsList > li {
-  display: flex;
-  align-items: center;
-  /* optional: add a little vertical breathing room */
-  margin-bottom: 0.5rem;
-}
-
-/* Space between badge and text */
-#detailAmendmentsList .amendment-type {
-  margin-right: 0.5rem;
-}
-
-/* Space between text and status icon */
-#detailAmendmentsList .amendment-status {
-  margin-left: 0.5rem;
-}
-.full-text-block {
-  margin: 1rem 0;            /* spacing above/below */
-}
-.full-text-block strong {
-  display: block;
-  font-size: 0.9rem;      /* match the .modal-content li font-size */
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: inherit;         /* keeps the same color */
-}
-
-.modal {
-  overflow: hidden;
-  z-index: 1100;
-
-  /* position modal slightly below header and allow some breathing room below */
-  align-items: flex-start;
-  padding: 4rem 1rem 4rem 1rem; /* top, right, bottom, left */
-}
-
-.modal-content {
-  max-height: calc(100vh - 6rem); /* leaves 3rem above and below */
-  margin-bottom: 2rem;            /* adds visual gap below */
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 6px;
-  width: 100%;
-  max-width: 600px;
-  padding: 1.5rem;
-  position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
   </style>
 </head>
-<body>
+<body data-disclaimer="This is an unofficial early beta version of a Decisions Database for ANUSA SRC decisions, containing limited data from 2025's SRC1. It is a proof-of-concept only, demonstrating my commitment to delivering this policy within the resource and time constraints of a campaign period, and may contain some inaccuracies. I look forward to implementing a full decisions database moving forward if elected as your independent General Secretary. Built by Malakai for ANUSA.">
 
-  <!-- Header -->
   <header class="site-header">
-    <div class="container">
-      <a href="#" class="logo">ANUSA Tracker</a>
-    </div>
+    <a href="#" class="logo">ANUSA Tracker</a>
   </header>
-  <body data-disclaimer="This is an unofficial early beta version of a Decisions Database for ANUSA SRC decisions, containing limited data from 2025’s SRC1. It is a proof-of-concept only, demonstrating my commitment to delivering this policy within the resource and time constraints of a campaign period, and may contain some inaccuracies.  I look forward to implementing a full decisions database moving forward if elected as your independent General Secretary. Built by Malakai for ANUSA.">
-  <!-- Filters -->
+
   <div class="filters">
-    <input   type="text" id="searchInput"  placeholder="Search decisions…">
-    <select  id="typeFilter">
+    <input type="text" id="searchInput" placeholder="Search decisions…">
+    <select id="typeFilter">
       <option value="">All Types</option>
       <option value="Motion">Motions</option>
       <option value="Procedural">Procedurals</option>
       <option value="Appointment">Appointments</option>
     </select>
-    <select  id="statusFilter">
+    <select id="statusFilter">
       <option value="">All Outcomes</option>
       <option value="Passed">Passed</option>
       <option value="Failed">Failed</option>
     </select>
   </div>
 
-  <!-- Cards Grid -->
-  <main>
-    <div id="cardsContainer" class="cards-container"></div>
-  </main>
-
-  <!-- Detail Modal -->
-  <div id="detailModal" class="modal">
-    <div class="modal-content">
-      <span id="modalClose" class="close-btn">&times;</span>
-      <h2 id="detailTitle"></h2>
-<div id="detailSummary"></div>
-      <ul>
-        <li><strong>Mover:</strong> <span id="detailMover"></span></li>
-        <li><strong>Seconder:</strong> <span id="detailSeconder"></span></li>
-        <li><strong>Type:</strong> <span id="detailType"></span></li>
-        <li><strong>Status:</strong> <span id="detailStatus"></span></li>
-        <li><strong>Meeting:</strong> <span id="detailMeeting"></span></li>
-      </ul>
-      <div class="full-text-block">
-  <strong>Action:</strong>
-  <div id="detailFullText" class="full-text-container"></div>
-</div>
-      <ul>
-        <li><strong>Amendments:</strong>
-          <ul id="detailAmendmentsList"></ul>
-        </li>
-      </ul>
+  <div class="workspace">
+    <div class="list-panel" id="listPanel"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-empty">Select a decision to view details</div>
     </div>
   </div>
 
+  <!-- Disclaimer modal -->
   <div id="readOnlyDisclaimerModal" class="modal" aria-hidden="true">
-  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="roDisclaimerTitle">
-    <span id="roDisclaimerClose" class="close-btn" aria-label="Close">&times;</span>
-    <h2 id="roDisclaimerTitle">Site disclaimer</h2>
-    <p id="roDisclaimerText" style="margin:.5rem 0 1rem;color:#555;white-space:pre-wrap;"></p>
-    <button id="roDisclaimerOk" style="background:#00663e;border:1px solid #00663e;color:#fff;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;cursor:pointer;">
-      I understand
-    </button>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="roDisclaimerTitle">
+      <span id="roDisclaimerClose" class="close-btn" aria-label="Close">&times;</span>
+      <h2 id="roDisclaimerTitle">Site disclaimer</h2>
+      <p id="roDisclaimerText"></p>
+      <button id="roDisclaimerOk" class="btn-primary">I understand</button>
+    </div>
   </div>
-</div>
-  <!-- Your Vite-built script modules -->
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
