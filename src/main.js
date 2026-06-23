@@ -34,7 +34,7 @@ const statusFilter = document.getElementById('statusFilter');
 const backBtn      = document.getElementById('backBtn');
 const detailBody   = document.getElementById('detailBody');
 
-let activeId = null;
+let activeKey = null; // "meetingDate/id" for uniqueness across meetings
 
 const isMobile = () => window.innerWidth <= 640;
 
@@ -48,7 +48,7 @@ function showList() {
 }
 
 backBtn.addEventListener('click', () => {
-  activeId = null;
+  activeKey = null;
   renderList();
   showList();
 });
@@ -59,7 +59,7 @@ function allDecisionsByMeeting() {
   for (const year of Object.keys(decisionsByMeeting).sort().reverse()) {
     for (const meeting of Object.keys(decisionsByMeeting[year]).sort().reverse()) {
         const sorted = [...decisionsByMeeting[year][meeting]].sort((a, b) => {
-        const parts = id => id.split('-').pop().split('.').map(Number);
+        const parts = id => id.split('.').map(Number);
         const [am, an] = parts(a.id);
         const [bm, bn] = parts(b.id);
         return am !== bm ? am - bm : an - bn;
@@ -108,19 +108,20 @@ function renderList() {
 
     for (const d of filtered) {
       const row = document.createElement('div');
-      row.className = 'decision-row' + (d.id === activeId ? ' active' : '');
+      const key = meeting + '/' + d.id;
+      row.className = 'decision-row' + (key === activeKey ? ' active' : '');
       row.dataset.id = d.id;
       row.innerHTML = `
-        <div class="row-id">${d.id.split('-').pop()}</div>
+        <div class="row-id">${d.id}</div>
         <div class="row-body">
           <div class="row-title">${d.title}</div>
           <div class="row-meta">
             ${badge(d.type, 'badge-type')}
-            ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : 'badge-failed')}
+            ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
           </div>
         </div>`;
       row.addEventListener('click', () => {
-        activeId = d.id;
+        activeKey = meeting + '/' + d.id;
         renderList();
         renderDetail(d, meeting);
         showDetail();
@@ -173,11 +174,11 @@ function renderDetail(d, meetingDate) {
   detailBody.innerHTML = `
     <div class="detail-content">
       <div class="detail-header">
-        <div class="detail-id">${d.id}</div>
+        <div class="detail-id">${meetingDate} · ${d.id}</div>
         <div class="detail-title">${d.title}</div>
         <div class="detail-badges">
           ${badge(d.type, 'badge-type')}
-          ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : 'badge-failed')}
+          ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
         </div>
       </div>
 
@@ -238,25 +239,3 @@ window.addEventListener('load', () => {
   renderList();
 });
 
-// Disclaimer
-(function () {
-  const LS_KEY = 'disclaimerDismissed_v1';
-  const modal  = document.getElementById('readOnlyDisclaimerModal');
-  const textEl = document.getElementById('roDisclaimerText');
-  const closeX = document.getElementById('roDisclaimerClose');
-  const okBtn  = document.getElementById('roDisclaimerOk');
-
-  const text = document.body.getAttribute('data-disclaimer') || '';
-  if (!text) return;
-  textEl.textContent = text;
-
-  function open()  { modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); }
-  function close() { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
-
-  if (localStorage.getItem(LS_KEY) !== '1') open();
-
-  closeX.addEventListener('click', close);
-  okBtn.addEventListener('click', () => { localStorage.setItem(LS_KEY, '1'); close(); });
-  modal.addEventListener('click', e => { if (e.target === modal) close(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') close(); });
-})();
