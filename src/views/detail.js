@@ -43,6 +43,15 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
       </div>
       <div class="meta-item"><div class="meta-label">Mover</div><div class="meta-value">${d.mover || '—'}</div></div>
       <div class="meta-item"><div class="meta-label">Seconder</div><div class="meta-value">${d.seconder || '—'}</div></div>
+      ${meta.minutesUrl && d.minutesPage ? `
+      <div class="meta-item meta-item-full">
+        <div class="meta-label">Source</div>
+        <div class="meta-value">
+          <a href="${meta.minutesUrl}#page=${d.minutesPage}" target="_blank" rel="noopener" class="minutes-page-link">
+            View in official minutes — from p.${d.minutesPage} ↗
+          </a>
+        </div>
+      </div>` : ''}
     </div>
 
     ${preambleHtml ? `
@@ -63,13 +72,7 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
       <ul class="amendments-list">${amendmentsHtml}</ul>
     </div>` : ''}
 
-    ${meta.minutesUrl && d.minutesPage ? `
-    <div class="detail-section minutes-source-section">
-      <div class="detail-section-title">Source</div>
-      <a href="${meta.minutesUrl}#page=${d.minutesPage}" target="_blank" rel="noopener" class="minutes-page-link">
-        View in official minutes — p.${d.minutesPage} ↗
-      </a>
-    </div>` : ''}`;
+    `;
 
   el.querySelector('.js-meeting-link')?.addEventListener('click', () => onMeetingClick(meetingDate));
   return el;
