@@ -17,8 +17,33 @@ const detailPanel  = document.getElementById('detailPanel');
 const searchInput  = document.getElementById('searchInput');
 const typeFilter   = document.getElementById('typeFilter');
 const statusFilter = document.getElementById('statusFilter');
+const backBtn      = document.getElementById('backBtn');
+const detailBody   = document.getElementById('detailBody');
 
 let activeId = null;
+
+const isMobile = () => window.innerWidth <= 640;
+
+function showDetail() {
+  if (isMobile()) {
+    listPanel.classList.add('mobile-hidden');
+    detailPanel.classList.remove('mobile-hidden');
+    window.scrollTo(0, 0);
+  }
+}
+
+function showList() {
+  if (isMobile()) {
+    detailPanel.classList.add('mobile-hidden');
+    listPanel.classList.remove('mobile-hidden');
+  }
+}
+
+backBtn.addEventListener('click', () => {
+  activeId = null;
+  renderList();
+  showList();
+});
 
 function allDecisionsByMeeting() {
   // Returns [ { meeting, decisions[] } ] sorted by meeting date desc
@@ -89,6 +114,7 @@ function renderList() {
         activeId = d.id;
         renderList();
         renderDetail(d);
+        showDetail();
       });
       listPanel.appendChild(row);
     }
@@ -120,7 +146,7 @@ function renderDetail(d) {
       <span class="amendment-result ${a.passed ? 'passed' : 'failed'}">${a.passed ? '✓ Passed' : '✗ Failed'}</span>
     </li>`).join('');
 
-  detailPanel.innerHTML = `
+  detailBody.innerHTML = `
     <div class="detail-content">
       <div class="detail-header">
         <div class="detail-id">${d.id}</div>
@@ -161,7 +187,10 @@ searchInput.addEventListener('input', renderList);
 typeFilter.addEventListener('change', renderList);
 statusFilter.addEventListener('change', renderList);
 
-window.addEventListener('load', renderList);
+window.addEventListener('load', () => {
+  if (!isMobile()) detailPanel.classList.remove('mobile-hidden');
+  renderList();
+});
 
 // Disclaimer
 (function () {
