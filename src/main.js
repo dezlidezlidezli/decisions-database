@@ -9,6 +9,8 @@ const detailBody   = document.getElementById('detailBody');
 const backBtn      = document.getElementById('backBtn');
 const filtersBar   = document.getElementById('filtersBar');
 const searchInput  = document.getElementById('searchInput');
+const searchClear  = document.getElementById('searchClear');
+const searchWrap   = searchInput.closest('.search-wrap');
 const typeFilter   = document.getElementById('typeFilter');
 const statusFilter = document.getElementById('statusFilter');
 
@@ -163,7 +165,16 @@ function renderList() {
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────────
-searchInput.addEventListener('input',   renderList);
+searchInput.addEventListener('input', () => {
+  searchWrap.classList.toggle('has-value', searchInput.value.length > 0);
+  renderList();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchWrap.classList.remove('has-value');
+  searchInput.focus();
+  renderList();
+});
 typeFilter.addEventListener('change',   renderList);
 statusFilter.addEventListener('change', renderList);
 
