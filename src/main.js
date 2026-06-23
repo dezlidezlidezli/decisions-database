@@ -45,9 +45,8 @@ function renderCards() {
   const statusVal = statusFilter.value;
 
   cardsContainer.innerHTML = '';
-  const year = new Date().getFullYear().toString();
-  const meetingsByYear = decisionsByMeeting[year] || {};
-  const allDecisions = Object.values(meetingsByYear).flat();
+  const allDecisions = Object.values(decisionsByMeeting)
+    .flatMap(meetingsByYear => Object.values(meetingsByYear).flat());
 
   allDecisions
     .filter(d => {
