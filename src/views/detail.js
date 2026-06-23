@@ -61,6 +61,14 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
     <div class="detail-section">
       <div class="detail-section-title">Amendments</div>
       <ul class="amendments-list">${amendmentsHtml}</ul>
+    </div>` : ''}
+
+    ${meta.minutesUrl && d.minutesPage ? `
+    <div class="detail-section minutes-source-section">
+      <div class="detail-section-title">Source</div>
+      <a href="${meta.minutesUrl}#page=${d.minutesPage}" target="_blank" rel="noopener" class="minutes-page-link">
+        View in official minutes — p.${d.minutesPage} ↗
+      </a>
     </div>` : ''}`;
 
   el.querySelector('.js-meeting-link')?.addEventListener('click', () => onMeetingClick(meetingDate));

@@ -5,6 +5,7 @@ export default {
   "fullText": "1. As a policy of the Association, the ANUSA SRC supports the demands above, which have already been signed by over 100 people.\\n2. The ANUSA SRC requests ANUSA use social media and the ANUSA newsletter to promote the ANU ZERO online petition which can be found here: ANU ZERO: Demand Zero Investment in Fossil Fuels | Megaphone Australia \\n3. The ANUSA SRC asks the undergraduate and postgraduate representatives on University Council to press these demands.",
   "mover": "Sarah Strange",
   "seconder": "Blair Doran",
+  "minutesPage": null,
   "type": "Motion",
   "status": "Passed",
   "amendments": []

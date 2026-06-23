@@ -5,6 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC notes the report into the Environment Department.\n2. The SRC supports reforms to ensure that the environment remains at the core of ANUSA’s environmental activism.\n3. The SRC supports the transition of the Environment Department to an Environment Committee focused on environmental work.\n4. The SRC supports measures that have been taken to ensure all spending of the Association abides by the ANUSA Constitution, all relevant regulations, and any other instruments created under the Constitution or regulations.",
   "mover": "Will Burfoot",
   "seconder": "Kiera Rosenberg",
+  "minutesPage": null,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
