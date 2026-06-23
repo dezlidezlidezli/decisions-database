@@ -211,7 +211,7 @@
 
     .detail-meta-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: .5rem 1.5rem;
       background: #fff;
       border: 1px solid #e8e8e8;
@@ -219,6 +219,7 @@
       padding: 1rem 1.25rem;
       margin-bottom: 1.5rem;
     }
+    .detail-meta-grid .meta-item:first-child { grid-column: 1 / -1; }
     .meta-item { }
     .meta-label {
       font-size: .7rem;
@@ -371,16 +372,6 @@
       text-overflow: ellipsis;
     }
     .back-btn:hover { background: #f0f7f4 }
-
-    /* ── Narrow detail panel ── */
-    @media (max-width: 640px) {
-      .detail-meta-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      .detail-meta-grid .meta-item:first-child {
-        grid-column: 1 / -1;
-      }
-    }
 
     /* ── Meeting motion rows ── */
     .meeting-motion-row {
