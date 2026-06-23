@@ -34,7 +34,8 @@ const statusFilter = document.getElementById('statusFilter');
 const backBtn      = document.getElementById('backBtn');
 const detailBody   = document.getElementById('detailBody');
 
-let activeKey = null; // "meetingDate/id" for uniqueness across meetings
+// activeKey: null | "m/DATE" (meeting view) | "d/DATE/ID" (decision view)
+let activeKey = null;
 
 const isMobile = () => window.innerWidth <= 640;
 
@@ -43,22 +44,18 @@ function showDetail() {
   if (isMobile()) window.scrollTo(0, 0);
 }
 
-function showList() {
-  syncPanelVisibility();
-}
-
 backBtn.addEventListener('click', () => {
   activeKey = null;
+  detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details</div>';
   renderList();
-  showList();
+  syncPanelVisibility();
 });
 
 function allDecisionsByMeeting() {
-  // Returns [ { meeting, decisions[] } ] sorted by meeting date desc
   const entries = [];
   for (const year of Object.keys(decisionsByMeeting).sort().reverse()) {
     for (const meeting of Object.keys(decisionsByMeeting[year]).sort().reverse()) {
-        const sorted = [...decisionsByMeeting[year][meeting]].sort((a, b) => {
+      const sorted = [...decisionsByMeeting[year][meeting]].sort((a, b) => {
         const parts = id => id.split('.').map(Number);
         const [am, an] = parts(a.id);
         const [bm, bn] = parts(b.id);
@@ -77,7 +74,7 @@ function filterDecisions(decisions) {
   const statusVal = statusFilter.value;
 
   return decisions.filter(d => {
-    const haystack = [d.id, d.title, d.summary, d.preamble, d.mover, d.seconder, d.fullText,
+    const haystack = [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
       ...(d.amendments || []).map(a => a.text)]
       .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ');
     return tokens.every(t => haystack.includes(t))
@@ -90,6 +87,12 @@ function badge(text, cls) {
   return `<span class="badge ${cls}">${text}</span>`;
 }
 
+function statusBadgeClass(status) {
+  if (status === 'Passed')    return 'badge-passed';
+  if (status === 'Withdrawn') return 'badge-withdrawn';
+  return 'badge-failed';
+}
+
 function renderList() {
   listPanel.innerHTML = '';
   const groups = allDecisionsByMeeting();
@@ -100,28 +103,35 @@ function renderList() {
     if (!filtered.length) continue;
     anyResults = true;
 
-    const heading = document.createElement('div');
-    heading.className = 'meeting-heading';
     const meta = meetingMeta[meeting];
-    heading.textContent = meta ? `${meta.name} — ${meta.date}` : meeting;
+    const meetingKey = 'm/' + meeting;
+
+    const heading = document.createElement('div');
+    heading.className = 'meeting-heading' + (activeKey === meetingKey ? ' active' : '');
+    heading.innerHTML = `<span class="meeting-heading-name">${meta ? meta.name : meeting}</span><span class="meeting-heading-arrow">›</span>`;
+    heading.addEventListener('click', () => {
+      activeKey = meetingKey;
+      renderList();
+      renderMeetingDetail(meeting);
+      showDetail();
+    });
     listPanel.appendChild(heading);
 
     for (const d of filtered) {
+      const key = 'd/' + meeting + '/' + d.id;
       const row = document.createElement('div');
-      const key = meeting + '/' + d.id;
       row.className = 'decision-row' + (key === activeKey ? ' active' : '');
-      row.dataset.id = d.id;
       row.innerHTML = `
         <div class="row-id">${d.id}</div>
         <div class="row-body">
           <div class="row-title">${d.title}</div>
           <div class="row-meta">
             ${badge(d.type, 'badge-type')}
-            ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
+            ${badge(d.status, statusBadgeClass(d.status))}
           </div>
         </div>`;
       row.addEventListener('click', () => {
-        activeKey = meeting + '/' + d.id;
+        activeKey = key;
         renderList();
         renderDetail(d, meeting);
         showDetail();
@@ -135,28 +145,86 @@ function renderList() {
   }
 }
 
+function renderMeetingDetail(meetingDate) {
+  const meta = meetingMeta[meetingDate] || {};
+  const decisions = allDecisionsByMeeting().find(g => g.meeting === meetingDate)?.decisions || [];
+
+  const statsTotal = decisions.length;
+  const statsPassed = decisions.filter(d => d.status === 'Passed').length;
+  const statsFailed = decisions.filter(d => d.status === 'Failed').length;
+  const statsWithdrawn = decisions.filter(d => d.status === 'Withdrawn').length;
+
+  const motionRows = decisions.map(d => `
+    <div class="meeting-motion-row" data-key="d/${meetingDate}/${d.id}">
+      <span class="row-id" style="min-width:40px;font-size:.7rem;color:#999;font-weight:600">${d.id}</span>
+      <span style="flex:1;font-size:.875rem;color:#333">${d.title}</span>
+      ${badge(d.status, statusBadgeClass(d.status))}
+    </div>`).join('');
+
+  detailBody.innerHTML = `
+    <div class="detail-content">
+      <div class="detail-header">
+        <div class="detail-id" style="text-transform:none;letter-spacing:0">Meeting</div>
+        <div class="detail-title">${meta.name || meetingDate}</div>
+      </div>
+
+      <div class="detail-meta-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="meta-item">
+          <div class="meta-label">Date</div>
+          <div class="meta-value">${meta.date || '—'}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Location</div>
+          <div class="meta-value">${meta.location || '—'}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Duration</div>
+          <div class="meta-value">${meta.duration || '—'}</div>
+        </div>
+      </div>
+
+      ${meta.minutesUrl ? `
+      <div class="detail-section" style="padding:.75rem 1.25rem">
+        <a href="${meta.minutesUrl}" target="_blank" rel="noopener" class="minutes-link" style="font-size:.875rem">
+          View official minutes ↗
+        </a>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <div class="detail-section-title">Motions (${statsTotal} total — ${statsPassed} passed, ${statsFailed} failed${statsWithdrawn ? `, ${statsWithdrawn} withdrawn` : ''})</div>
+        <div class="meeting-motions-list">${motionRows}</div>
+      </div>
+    </div>`;
+
+  // Wire up motion rows to open their detail
+  detailBody.querySelectorAll('.meeting-motion-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const key = row.dataset.key;
+      const [, date, id] = key.split('/');
+      const allGroups = allDecisionsByMeeting();
+      const group = allGroups.find(g => g.meeting === date);
+      const d = group?.decisions.find(x => x.id === id);
+      if (!d) return;
+      activeKey = key;
+      renderList();
+      renderDetail(d, date);
+    });
+  });
+}
+
 function renderDetail(d, meetingDate) {
   const meta = meetingMeta[meetingDate] || {};
 
-  // Preamble — render as markdown
-  const preambleHtml = d.preamble ? marked.parse(d.preamble) : '';
-
-  // Full text — render as markdown
+  const preambleHtml     = d.preamble  ? marked.parse(d.preamble)  : '';
   const fullTextHtmlContent = d.fullText ? marked.parse(d.fullText) : '';
 
-  // Meeting meta row
-  const meetingLabel = meta.name ? `${meta.name}${meta.date ? ` — ${meta.date}` : ''}` : (meetingDate || '—');
-  const minutesLink = meta.minutesUrl
-    ? `<a href="${meta.minutesUrl}" target="_blank" rel="noopener" class="minutes-link">View minutes ↗</a>`
-    : '';
+  const meetingInfoBtn = `<button class="meeting-info-link" data-meeting="${meetingDate}">${meta.name || meetingDate} ↗</button>`;
 
-  // Amendments
   const amendmentsHtml = (d.amendments || []).map(a => {
     const fullTextHtml = a.fullText
-      ? `<div class="amendment-full-text">${marked.parse(a.fullText)}</div>` : '';
+      ? `<div class="amendment-full-text markdown-body">${marked.parse(a.fullText)}</div>` : '';
     const movers = [a.mover, a.seconder].filter(Boolean).join(' / ');
-    const moversHtml = movers
-      ? `<div class="amendment-movers">${movers}</div>` : '';
+    const moversHtml = movers ? `<div class="amendment-movers">${movers}</div>` : '';
     return `
     <li class="amendment-item">
       <div class="amendment-main">
@@ -174,23 +242,21 @@ function renderDetail(d, meetingDate) {
   detailBody.innerHTML = `
     <div class="detail-content">
       <div class="detail-header">
-        <div class="detail-id">${meetingDate} · ${d.id}</div>
+        <div class="detail-id">${d.id}</div>
         <div class="detail-title">${d.title}</div>
         <div class="detail-badges">
           ${badge(d.type, 'badge-type')}
-          ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : d.status === 'Withdrawn' ? 'badge-withdrawn' : 'badge-failed')}
+          ${badge(d.status, statusBadgeClass(d.status))}
         </div>
       </div>
 
       <div class="detail-meta-grid">
         <div class="meta-item">
           <div class="meta-label">Meeting</div>
-          <div class="meta-value">${meetingLabel}${minutesLink ? `<br>${minutesLink}` : ''}</div>
+          <div class="meta-value">${meetingInfoBtn}</div>
         </div>
         <div class="meta-item"><div class="meta-label">Mover</div><div class="meta-value">${d.mover || '—'}</div></div>
         <div class="meta-item"><div class="meta-label">Seconder</div><div class="meta-value">${d.seconder || '—'}</div></div>
-        ${meta.location ? `<div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">${meta.location}</div></div>` : ''}
-        ${meta.duration ? `<div class="meta-item"><div class="meta-label">Duration</div><div class="meta-value">${meta.duration}</div></div>` : ''}
       </div>
 
       ${preambleHtml ? `
@@ -211,6 +277,15 @@ function renderDetail(d, meetingDate) {
         <ul class="amendments-list">${amendmentsHtml}</ul>
       </div>` : ''}
     </div>`;
+
+  detailBody.querySelectorAll('.meeting-info-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const date = btn.dataset.meeting;
+      activeKey = 'm/' + date;
+      renderList();
+      renderMeetingDetail(date);
+    });
+  });
 }
 
 searchInput.addEventListener('input', renderList);
@@ -219,7 +294,7 @@ statusFilter.addEventListener('change', renderList);
 
 function syncPanelVisibility() {
   if (isMobile()) {
-    if (activeId) {
+    if (activeKey) {
       listPanel.classList.add('mobile-hidden');
       detailPanel.classList.remove('mobile-hidden');
     } else {
@@ -238,4 +313,3 @@ window.addEventListener('load', () => {
   syncPanelVisibility();
   renderList();
 });
-
