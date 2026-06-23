@@ -1,3 +1,7 @@
+import { marked } from 'marked';
+
+marked.setOptions({ breaks: true });
+
 const modules = import.meta.glob('../data/decisions/*/*/*.js', { eager: true });
 const meetingModules = import.meta.glob('../data/decisions/*/*/_meeting.js', { eager: true });
 
@@ -133,17 +137,11 @@ function renderList() {
 function renderDetail(d, meetingDate) {
   const meta = meetingMeta[meetingDate] || {};
 
-  // Preamble paragraphs
-  const preambleText = d.preamble || '';
-  const preambleHtml = preambleText.trim()
-    ? preambleText.split('\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('')
-    : '';
+  // Preamble — render as markdown
+  const preambleHtml = d.preamble ? marked.parse(d.preamble) : '';
 
-  // Full text as numbered list
-  const text = (d.fullText || '').trim();
-  const points = text.split(/^\d+\.\s*/gm).filter(Boolean).map(s => s.trim());
-  const listItems = (points.length > 1 ? points : text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean))
-    .map(pt => `<li>${pt}</li>`).join('');
+  // Full text — render as markdown
+  const fullTextHtmlContent = d.fullText ? marked.parse(d.fullText) : '';
 
   // Meeting meta row
   const meetingLabel = meta.name ? `${meta.name}${meta.date ? ` — ${meta.date}` : ''}` : (meetingDate || '—');
@@ -154,7 +152,7 @@ function renderDetail(d, meetingDate) {
   // Amendments
   const amendmentsHtml = (d.amendments || []).map(a => {
     const fullTextHtml = a.fullText
-      ? `<div class="amendment-full-text">${a.fullText}</div>` : '';
+      ? `<div class="amendment-full-text">${marked.parse(a.fullText)}</div>` : '';
     const movers = [a.mover, a.seconder].filter(Boolean).join(' / ');
     const moversHtml = movers
       ? `<div class="amendment-movers">${movers}</div>` : '';
@@ -197,13 +195,13 @@ function renderDetail(d, meetingDate) {
       ${preambleHtml ? `
       <div class="detail-section">
         <div class="detail-section-title">Background</div>
-        <div class="detail-preamble">${preambleHtml}</div>
+        <div class="markdown-body">${preambleHtml}</div>
       </div>` : ''}
 
-      ${listItems ? `
+      ${fullTextHtmlContent ? `
       <div class="detail-section">
         <div class="detail-section-title">Action</div>
-        <ol class="full-text-list">${listItems}</ol>
+        <div class="markdown-body">${fullTextHtmlContent}</div>
       </div>` : ''}
 
       ${amendmentsHtml ? `
