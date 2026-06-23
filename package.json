@@ -15,5 +15,8 @@
   "devDependencies": {
     "vite": "^7.0.6",
     "vite-plugin-singlefile": "^2.3.0"
+  },
+  "dependencies": {
+    "marked": "^18.0.5"
   }
 }
