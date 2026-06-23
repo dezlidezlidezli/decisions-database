@@ -55,7 +55,16 @@
       color: #333;
       outline: none;
     }
-    .filters input { flex: 2 }
+    .search-wrap { flex: 2; position: relative; display: flex; align-items: center; }
+    .search-wrap input { flex: 1; padding-right: 2rem; }
+    .search-clear {
+      position: absolute; right: .5rem;
+      background: none; border: none; cursor: pointer;
+      color: #aaa; font-size: 1.1rem; line-height: 1;
+      padding: 0; display: none;
+    }
+    .search-clear:hover { color: #555; }
+    .search-wrap.has-value .search-clear { display: block; }
     .filters select { flex: 1 }
     .filters input:focus,
     .filters select:focus { border-color: #00663e; background: #fff }
@@ -446,7 +455,10 @@
   </div>
 
   <div class="filters" id="filtersBar">
-    <input type="text" id="searchInput" placeholder="Search decisions…">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search decisions…">
+      <button id="searchClear" class="search-clear" aria-label="Clear search">×</button>
+    </div>
     <select id="typeFilter">
       <option value="">All Types</option>
       <option value="Motion">Motions</option>
