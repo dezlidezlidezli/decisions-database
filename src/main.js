@@ -1,244 +1,181 @@
-// src/main.js
-
-// 1. Glob‑import all decision modules at build time
 const modules = import.meta.glob('../data/decisions/*/*/*.js', { eager: true });
-console.log('🔍 decision files found:', Object.keys(modules));
 
-// 2. Build decisionsByMeeting: { [year]: { [meeting]: [decisions…] } }
+// Build { year: { meeting: [decisions] } }
 const decisionsByMeeting = {};
 for (const path of Object.keys(modules)) {
-  const parts    = path.split('/');     // ["..","data","decisions","2025","2025-02-26","7.1.js"]
-  const year     = parts[3];            // "2025"
-  const meeting  = parts[4];            // "2025-02-26"
+  const parts = path.split('/');
+  const year = parts[3];
+  const meeting = parts[4];
   const decision = modules[path].default;
-
-  decisionsByMeeting[year]        ||= {};
+  decisionsByMeeting[year] ||= {};
   decisionsByMeeting[year][meeting] ||= [];
   decisionsByMeeting[year][meeting].push(decision);
 }
-console.log('📦 decisionsByMeeting:', decisionsByMeeting);
 
-// 3. Grab UI elements
-const cardsContainer   = document.getElementById('cardsContainer');
-const searchInput      = document.getElementById('searchInput');
-const typeFilter       = document.getElementById('typeFilter');
-const statusFilter     = document.getElementById('statusFilter');
-const detailModal      = document.getElementById('detailModal');
-const modalClose       = document.getElementById('modalClose');
-const detailTitle      = document.getElementById('detailTitle');
-const detailSummary    = document.getElementById('detailSummary');
-const detailMover      = document.getElementById('detailMover');
-const detailSeconder   = document.getElementById('detailSeconder');
-const detailType       = document.getElementById('detailType');
-const detailStatus     = document.getElementById('detailStatus');
-const detailMeeting    = document.getElementById('detailMeeting');
-const detailFullText   = document.getElementById('detailFullText');
-const detailAmendments = document.getElementById('detailAmendmentsList');
+const listPanel    = document.getElementById('listPanel');
+const detailPanel  = document.getElementById('detailPanel');
+const searchInput  = document.getElementById('searchInput');
+const typeFilter   = document.getElementById('typeFilter');
+const statusFilter = document.getElementById('statusFilter');
 
-// 4. Render + Search + Filter
-function renderCards() {
-  const rawQuery = searchInput.value.trim().toLowerCase();
-  const normalizedQuery = rawQuery.replace(/[-\W]+/g, ' ').trim();
-  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+let activeId = null;
 
+function allDecisionsByMeeting() {
+  // Returns [ { meeting, decisions[] } ] sorted by meeting date desc
+  const entries = [];
+  for (const year of Object.keys(decisionsByMeeting).sort().reverse()) {
+    for (const meeting of Object.keys(decisionsByMeeting[year]).sort().reverse()) {
+      entries.push({ meeting, decisions: decisionsByMeeting[year][meeting] });
+    }
+  }
+  return entries;
+}
+
+function filterDecisions(decisions) {
+  const raw = searchInput.value.trim().toLowerCase();
+  const tokens = raw.replace(/[-\W]+/g, ' ').trim().split(/\s+/).filter(Boolean);
   const typeVal   = typeFilter.value;
   const statusVal = statusFilter.value;
 
-  cardsContainer.innerHTML = '';
-  const allDecisions = Object.values(decisionsByMeeting)
-    .flatMap(meetingsByYear => Object.values(meetingsByYear).flat());
-
-  allDecisions
-    .filter(d => {
-      // build a haystack of all fields
-      const haystack = [
-        d.id, d.title, d.summary, d.preamble,
-        d.mover, d.seconder, d.type, d.status,
-        d.fullText,
-        ...(d.amendments || []).map(a => a.text)
-      ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-      .replace(/[-\W]+/g, ' ')
-      .trim();
-
-      const tokensMatch = tokens.every(tok => haystack.includes(tok));
-      const typeMatch   = !typeVal   || d.type   === typeVal;
-      const statusMatch = !statusVal || d.status === statusVal;
-
-      return tokensMatch && typeMatch && statusMatch;
-    })
-    .forEach(d => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <h3>${d.id}: ${d.title}</h3>
-        ${d.summary ? `<p>${d.summary}</p>` : ''}
-        <p class="card-meta">
-          <strong>${d.type}</strong> |
-          Status: <span class="${d.status.toLowerCase()}">${d.status}</span>
-        </p>
-      `;
-      card.addEventListener('click', () => openDetail(d));
-      cardsContainer.appendChild(card);
-    });
+  return decisions.filter(d => {
+    const haystack = [d.id, d.title, d.summary, d.preamble, d.mover, d.seconder, d.fullText,
+      ...(d.amendments || []).map(a => a.text)]
+      .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ');
+    return tokens.every(t => haystack.includes(t))
+      && (!typeVal   || d.type   === typeVal)
+      && (!statusVal || d.status === statusVal);
+  });
 }
 
-// 5. Detail modal logic (with proper numbering of fullText)
-function openDetail(d) {
-    document.body.style.overflow = 'hidden';
-  detailModal.style.display = 'flex';
-  // 1. Populate the header fields
-  detailTitle.textContent    = `${d.id}: ${d.title}`;
-const summaryText = d.preamble || d.summary || '';
-if (typeof summaryText === 'string' && summaryText.trim().length > 0) {
-  const paragraphs = summaryText.split('\n');
-  detailSummary.innerHTML = paragraphs
-    .map(p => `<p>${p.trim()}</p>`)
-    .join('');
-} else {
-  detailSummary.innerHTML = '<p><em>No summary available.</em></p>';
+function badge(text, cls) {
+  return `<span class="badge ${cls}">${text}</span>`;
 }
-  detailMover.textContent    = d.mover;
-  detailSeconder.textContent = d.seconder;
-  detailType.textContent     = d.type;
-  detailStatus.textContent   = d.status;
-  detailMeeting.textContent  = d.meeting;
 
-  // 2. Build and render a numbered list for fullText
-  const container = document.getElementById('detailFullText');
-  container.innerHTML = '';
+function renderList() {
+  listPanel.innerHTML = '';
+  const groups = allDecisionsByMeeting();
+  let anyResults = false;
 
-  // Normalize the text
-  const text = d.fullText.trim();
+  for (const { meeting, decisions } of groups) {
+    const filtered = filterDecisions(decisions);
+    if (!filtered.length) continue;
+    anyResults = true;
 
-  // Split either on “1.”, “2.” etc., or double‑newlines
-  const points = text
-   .split(/^\d+\.\s*/gm)    // ^ = start of line, m = multiline
-    .filter(Boolean)
-    .map(s => s.trim());
+    const heading = document.createElement('div');
+    heading.className = 'meeting-heading';
+    heading.textContent = meeting;
+    listPanel.appendChild(heading);
 
-  // If that gave you just one big chunk, fall back to paragraphs
-  if (points.length === 1) {
-    Object.assign(
-      points,
-      text
-        .split(/\n{2,}/)
-        .map(s => s.trim())
-        .filter(Boolean)
-    );
+    for (const d of filtered) {
+      const row = document.createElement('div');
+      row.className = 'decision-row' + (d.id === activeId ? ' active' : '');
+      row.dataset.id = d.id;
+      row.innerHTML = `
+        <div class="row-id">${d.id.split('-').pop()}</div>
+        <div class="row-body">
+          <div class="row-title">${d.title}</div>
+          <div class="row-meta">
+            ${badge(d.type, 'badge-type')}
+            ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : 'badge-failed')}
+          </div>
+        </div>`;
+      row.addEventListener('click', () => {
+        activeId = d.id;
+        renderList();
+        renderDetail(d);
+      });
+      listPanel.appendChild(row);
+    }
   }
 
-  // Now render them as an <ol>
-  const ol = document.createElement('ol');
-  points.forEach(pt => {
-    const li = document.createElement('li');
-    li.textContent = pt;
-    ol.appendChild(li);
-  });
-  container.appendChild(ol);
-
-  // 3. Render amendments (status + badge)
-detailAmendments.innerHTML = '';
-(d.amendments || []).forEach(a => {
-  const li = document.createElement('li');
-  // Friendly/unfriendly badge on the left
-  const typeBadge = document.createElement('span');
-  typeBadge.className   = `amendment-type ${a.friendly ? 'friendly' : 'unfriendly'}`;
-  typeBadge.textContent = a.friendly ? 'Friendly' : 'Unfriendly';
-  li.appendChild(typeBadge);
-
-  // amendment text
-  li.append(document.createTextNode(a.text));
-
-  // ✓/✗ status on the right
-  const statusSpan = document.createElement('span');
-  statusSpan.className   = `amendment-status ${a.passed ? 'passed' : 'failed'}`;
-  statusSpan.textContent = a.passed ? '✓' : '✗';
-  li.appendChild(statusSpan);
-
-  detailAmendments.appendChild(li);
-});
-
-// 3a. Show or hide the Amendments heading entirely
-const amendmentsLi = detailAmendments.parentElement; 
-if (d.amendments && d.amendments.length > 0) {
-  amendmentsLi.style.display = '';    // visible
-} else {
-  amendmentsLi.style.display = 'none'; // hide the whole <li><strong>Amendments:</strong>…
+  if (!anyResults) {
+    listPanel.innerHTML = '<div class="no-results">No decisions match your filters.</div>';
+  }
 }
 
-  // 4. Show the modal
-  detailModal.style.display = 'flex';
+function renderDetail(d) {
+  // Preamble/summary paragraphs
+  const preambleText = d.preamble || d.summary || '';
+  const preambleHtml = preambleText.trim()
+    ? preambleText.split('\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('')
+    : '';
+
+  // Full text as numbered list
+  const text = (d.fullText || '').trim();
+  const points = text.split(/^\d+\.\s*/gm).filter(Boolean).map(s => s.trim());
+  const listItems = (points.length > 1 ? points : text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean))
+    .map(pt => `<li>${pt}</li>`).join('');
+
+  // Amendments
+  const amendmentsHtml = (d.amendments || []).map(a => `
+    <li class="amendment-item">
+      <span class="badge ${a.friendly ? 'badge-friendly' : 'badge-unfriendly'}">${a.friendly ? 'Friendly' : 'Unfriendly'}</span>
+      <span class="amendment-text">${a.text}</span>
+      <span class="amendment-result ${a.passed ? 'passed' : 'failed'}">${a.passed ? '✓ Passed' : '✗ Failed'}</span>
+    </li>`).join('');
+
+  detailPanel.innerHTML = `
+    <div class="detail-content">
+      <div class="detail-header">
+        <div class="detail-id">${d.id}</div>
+        <div class="detail-title">${d.title}</div>
+        <div class="detail-badges">
+          ${badge(d.type, 'badge-type')}
+          ${badge(d.status, d.status === 'Passed' ? 'badge-passed' : 'badge-failed')}
+        </div>
+      </div>
+
+      <div class="detail-meta-grid">
+        <div class="meta-item"><div class="meta-label">Meeting</div><div class="meta-value">${d.meeting}</div></div>
+        <div class="meta-item"><div class="meta-label">Mover</div><div class="meta-value">${d.mover || '—'}</div></div>
+        <div class="meta-item"><div class="meta-label">Seconder</div><div class="meta-value">${d.seconder || '—'}</div></div>
+      </div>
+
+      ${preambleHtml ? `
+      <div class="detail-section">
+        <div class="detail-section-title">Background</div>
+        <div class="detail-preamble">${preambleHtml}</div>
+      </div>` : ''}
+
+      ${listItems ? `
+      <div class="detail-section">
+        <div class="detail-section-title">Action</div>
+        <ol class="full-text-list">${listItems}</ol>
+      </div>` : ''}
+
+      ${amendmentsHtml ? `
+      <div class="detail-section">
+        <div class="detail-section-title">Amendments</div>
+        <ul class="amendments-list">${amendmentsHtml}</ul>
+      </div>` : ''}
+    </div>`;
 }
 
-function closeDetail() {
-  detailModal.style.display = 'none';
-  document.body.style.overflow = '';
-}
+searchInput.addEventListener('input', renderList);
+typeFilter.addEventListener('change', renderList);
+statusFilter.addEventListener('change', renderList);
 
-// 6. Event wiring
-modalClose.addEventListener('click', closeDetail);
-window.addEventListener('click', e => { 
-  if (e.target === detailModal) closeDetail();
-});
-searchInput.addEventListener('input', renderCards);
-typeFilter.addEventListener('change', renderCards);
-statusFilter.addEventListener('change', renderCards);
+window.addEventListener('load', renderList);
 
-// 7. Initial render
-window.addEventListener('load', renderCards);
-
-// === Read-only Disclaimer Popup ===
+// Disclaimer
 (function () {
   const LS_KEY = 'disclaimerDismissed_v1';
-  const modal = document.getElementById('readOnlyDisclaimerModal');
+  const modal  = document.getElementById('readOnlyDisclaimerModal');
   const textEl = document.getElementById('roDisclaimerText');
   const closeX = document.getElementById('roDisclaimerClose');
   const okBtn  = document.getElementById('roDisclaimerOk');
 
-  function openModal() {
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-    okBtn.focus({ preventScroll: false });
-  }
-  function closeModal() {
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-  }
+  const text = document.body.getAttribute('data-disclaimer') || '';
+  if (!text) return;
+  textEl.textContent = text;
 
-  function initReadOnlyDisclaimer() {
-    const text = document.body.getAttribute('data-disclaimer') || '';
-    if (!text) return; // no disclaimer set in code
-    textEl.textContent = text;
+  function open()  { modal.style.display = 'flex'; modal.setAttribute('aria-hidden', 'false'); }
+  function close() { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
 
-    const dismissed = localStorage.getItem(LS_KEY) === '1';
-    if (!dismissed) openModal();
+  if (localStorage.getItem(LS_KEY) !== '1') open();
 
-    // Close handlers
-    closeX.addEventListener('click', closeModal);
-    okBtn.addEventListener('click', () => {
-      localStorage.setItem(LS_KEY, '1'); // persist user dismissal
-      closeModal();
-    });
-
-    // Click outside to close
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // ESC to close
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.style.display === 'flex') {
-        closeModal();
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initReadOnlyDisclaimer);
-  } else {
-    initReadOnlyDisclaimer();
-  }
+  closeX.addEventListener('click', close);
+  okBtn.addEventListener('click', () => { localStorage.setItem(LS_KEY, '1'); close(); });
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display === 'flex') close(); });
 })();
