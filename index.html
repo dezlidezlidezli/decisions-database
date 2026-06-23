@@ -311,6 +311,69 @@
       color: #aaa;
       font-size: .9rem;
     }
+
+    /* ── Back button (mobile only) ── */
+    .back-btn {
+      display: none;
+      align-items: center;
+      gap: .4rem;
+      background: none;
+      border: none;
+      color: #00663e;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid #e0e0e0;
+      width: 100%;
+      text-align: left;
+    }
+    .back-btn:hover { background: #f0f7f4 }
+
+    /* ── Mobile layout ── */
+    @media (max-width: 640px) {
+      body { overflow: auto }
+
+      .filters {
+        flex-wrap: wrap;
+        padding: .6rem 1rem;
+        gap: .5rem;
+      }
+      .filters input  { flex: 1 1 100% }
+      .filters select { flex: 1 1 calc(50% - .25rem) }
+
+      .workspace {
+        flex-direction: column;
+        overflow: visible;
+        flex: none;
+      }
+
+      .list-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+        overflow-y: visible;
+      }
+
+      .detail-panel {
+        padding: 0;
+        background: #fff;
+        overflow-y: visible;
+      }
+
+      /* Hide/show panels via JS-toggled classes */
+      .list-panel.mobile-hidden  { display: none }
+      .detail-panel.mobile-hidden { display: none }
+
+      .back-btn { display: flex }
+
+      .detail-content {
+        padding: 1rem;
+        max-width: 100%;
+      }
+
+      .detail-title { font-size: 1.2rem }
+    }
   </style>
 </head>
 <body data-disclaimer="This is an unofficial early beta version of a Decisions Database for ANUSA SRC decisions, containing limited data from 2025's SRC1. It is a proof-of-concept only, demonstrating my commitment to delivering this policy within the resource and time constraints of a campaign period, and may contain some inaccuracies. I look forward to implementing a full decisions database moving forward if elected as your independent General Secretary. Built by Malakai for ANUSA.">
@@ -336,8 +399,11 @@
 
   <div class="workspace">
     <div class="list-panel" id="listPanel"></div>
-    <div class="detail-panel" id="detailPanel">
-      <div class="detail-empty">Select a decision to view details</div>
+    <div class="detail-panel mobile-hidden" id="detailPanel">
+      <button class="back-btn" id="backBtn">&#8592; All decisions</button>
+      <div id="detailBody">
+        <div class="detail-empty">Select a decision to view details</div>
+      </div>
     </div>
   </div>
 
