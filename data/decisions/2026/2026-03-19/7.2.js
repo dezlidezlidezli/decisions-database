@@ -5,6 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC calls on the ANU to extend Chifley Library opening hours to midnight during STUVAC and examination periods.\n2. The SRC requests that the ANU Library provide adequate staffing to support extended hours.\n3. The SRC notes that extended library access disproportionately benefits students without quiet study spaces at home.",
   "mover": "Alice Lorem",
   "seconder": "Bob Ipsum",
+  "minutesPage": 18,
   "type": "Motion",
   "status": "Passed",
   "amendments": [

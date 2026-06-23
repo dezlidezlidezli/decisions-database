@@ -5,6 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC expresses outrage at the decision of ANU Executive to almost triple the price of student and staff surface parking permits\n2. The ANUSA SRC further expresses outrage of the price increases to student and staff parking station permits\n3. The ANUSA SRC notes that these price increases will decrease the accessibility of the university campus for low-income and off-campus students\n4. The ANUSA SRC calls on the ANU Executive to take immediate action to reverse these price increases and further reduce the price of parking permits\n5. The ANUSA SRC requests that the Executive make a statement on Facebook and Instagram condemning these price increases\n6. The ANUSA SRC calls on the ANU to make signage and rules regarding parking more obvious to students\n7. The ANUSA SRC requests that the Executive investigate the potential for providing programs that help students to alleviate the financial burden of parking and parking fines on ANU campus\n8. The ANUSA SRC calls on the ANU to implement a more equitable, needs-based allocation system for residential permits.",
   "mover": "Will Roche",
   "seconder": "Jeremy Fox",
+  "minutesPage": null,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
@@ -13,6 +14,7 @@ export default {
       "fullText": "",
       "mover": "Isabella Coombs",
       "seconder": "",
+  "minutesPage": null,
       "passed": true,
       "friendly": true
     }
