@@ -6,84 +6,266 @@
   <title>Meeting Decisions Database</title>
   <style>
     /* General Reset */
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;background:#f9f9f9;color:#333}
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body { font-family:Arial,sans-serif; background:#f9f9f9; color:#333 }
+#detailSummary {
+  white-space: pre-wrap;
+    margin-bottom: 1rem;
+
+}
+
+#detailSummary p {
+  margin-bottom: 1rem;
+}
+
     /* Header */
-    .site-header{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000}
-    .site-header .container{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem}
-    .site-header .logo{font-size:1.25rem;font-weight:bold;color:#00663e;text-decoration:none}
+    .site-header {
+      background:#fff;
+      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+      position:sticky; top:0; z-index:1000;
+    }
+    .site-header .container {
+      max-width:1200px;
+      margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem 1rem;
+    }
+    .site-header .logo {
+      font-size:1.25rem;
+      font-weight:bold;
+      color:#00663e;
+      text-decoration:none;
+    }
+
     /* Filters */
-    .filters{display:flex;max-width:1200px;margin:1rem auto;padding:0 1rem;gap:1rem}
-    .filters input,.filters select{flex:1;padding:.5rem;font-size:.9rem}
-    /* Cards */
-    main{max-width:1200px;margin:0 auto 2rem;padding:0 1rem}
-    .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
-    .card{background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:1rem;cursor:pointer;transition:transform .2s}
-    .card:hover{transform:translateY(-2px)}
-    .card h3{font-size:1.1rem;margin-bottom:.5rem;color:#00663e}
-    .card p{font-size:.9rem;color:#555;margin-bottom:.5rem}
-    .card-meta{font-size:.8rem;color:#777}
+    .filters {
+      display:flex;
+      max-width:1200px;
+      margin:1rem auto;
+      padding:0 1rem;
+      gap:1rem;
+    }
+    .filters input,
+    .filters select {
+      flex:1;
+      padding:.5rem;
+      font-size:.9rem;
+    }
+
+    /* Cards grid */
+    main {
+      max-width:1200px;
+      margin:0 auto 2rem;
+      padding:0 1rem;
+    }
+    .cards-container {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:1rem;
+    }
+    .card {
+      background:#fff;
+      border-radius:6px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.1);
+      padding:1rem;
+      cursor:pointer;
+      transition:transform .2s;
+    }
+    .card:hover { transform:translateY(-2px) }
+    .card h3 { font-size:1.1rem; margin-bottom:.5rem; color:#00663e }
+    .card p  { font-size:.9rem; color:#555; margin-bottom:.5rem }
+    .card-meta {
+      font-size:.8rem;
+      color:#777;
+      margin-top:.25rem;
+    }
+
     /* Modal */
-    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:1rem}
-    .modal-content{background:#fff;border-radius:6px;width:100%;max-width:500px;padding:1.5rem;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
-    .modal-content h2{font-size:1.25rem;margin-bottom:.5rem;color:#00663e}
-    .modal-content p{font-size:.9rem;color:#555}
-    .modal-content ul{list-style:none;margin-top:1rem;padding-left:0}
-    .modal-content li{margin-bottom:.5rem;font-size:.9rem}
-    .modal-content strong{display:inline-block;width:140px}
-    .amendment-status{display:inline-block;width:1em;text-align:center;font-weight:bold;margin-right:.5rem}
-    .amendment-status.passed{color:green}
-    .amendment-status.failed{color:red}
-    .close-btn{position:absolute;top:.5rem;right:1rem;font-size:1.5rem;font-weight:bold;color:#999;cursor:pointer}
-    .close-btn:hover{color:#333}
+    .modal {
+      display:none;
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.6);
+      align-items:center; justify-content:center;
+      padding:1rem;
+    }
+.modal-content {
+  background:#fff;
+  border-radius:6px;
+  width:100%; max-width:600px;
+  padding:1.5rem 1.5rem 2rem 1.5rem; /* top, right, bottom, left */
+  position:relative;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+    .modal-content h2 {
+      font-size:1.5rem; margin-bottom:.5rem; color:#00663e;
+    }
+    .modal-content p { font-size:.95rem; color:#555; }
+    .modal-content ul { list-style:none; margin-top:1rem; padding-left:0 }
+    .modal-content li {
+      margin-bottom:.5rem; font-size:.9rem; display:flex; align-items:center;
+    }
+    .modal-content strong { display:inline-block; width:120px }
+    .amendment-status {
+      display:inline-block;
+      width:1em; text-align:center; font-weight:bold;
+      margin-right:.5rem;
+    }
+.full-text-container li {
+  display: list-item;       /* restore markers */
+  margin-bottom: 0.4rem;    /* your original spacing */
+}
+.full-text-container ol {
+  list-style-type: decimal; /* ensure numeric markers */
+  margin: 0.5rem 0 0.5rem 1.2rem; /* indent like you want */
+  padding-left: 0;
+}
+    .amendment-status.passed { color:green }
+    .amendment-status.failed { color:red }
+    .close-btn {
+      position:absolute;
+      top:.5rem; right:1rem;
+      font-size:1.5rem; font-weight:bold;
+      color:#999; cursor:pointer;
+    }
+    .close-btn:hover { color:#333 }
+
+    /* — New: Amendment type badges — */
+    .amendment-type {
+      display:inline-block;
+      padding:0.2em 0.5em;
+      border-radius:4px;
+      font-size:.75rem;
+      margin-left:.5rem;
+      vertical-align:middle;
+    }
+    .amendment-type.friendly {
+      background:#e0f8e9;
+      color:#047a37;
+    }
+    .amendment-type.unfriendly {
+      background:#fde0e0;
+      color:#a30e0e;
+    }
+    /* — end new badge styles — */
+    /* Apply flex only to the amendment list items */
+#detailAmendmentsList > li {
+  display: flex;
+  align-items: center;
+  /* optional: add a little vertical breathing room */
+  margin-bottom: 0.5rem;
+}
+
+/* Space between badge and text */
+#detailAmendmentsList .amendment-type {
+  margin-right: 0.5rem;
+}
+
+/* Space between text and status icon */
+#detailAmendmentsList .amendment-status {
+  margin-left: 0.5rem;
+}
+.full-text-block {
+  margin: 1rem 0;            /* spacing above/below */
+}
+.full-text-block strong {
+  display: block;
+  font-size: 0.9rem;      /* match the .modal-content li font-size */
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: inherit;         /* keeps the same color */
+}
+
+.modal {
+  overflow: hidden;
+  z-index: 1100;
+
+  /* position modal slightly below header and allow some breathing room below */
+  align-items: flex-start;
+  padding: 4rem 1rem 4rem 1rem; /* top, right, bottom, left */
+}
+
+.modal-content {
+  max-height: calc(100vh - 6rem); /* leaves 3rem above and below */
+  margin-bottom: 2rem;            /* adds visual gap below */
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 600px;
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
   </style>
 </head>
 <body>
+
   <!-- Header -->
   <header class="site-header">
     <div class="container">
       <a href="#" class="logo">ANUSA Tracker</a>
     </div>
   </header>
-
+  <body data-disclaimer="This is an unofficial early beta version of a Decisions Database for ANUSA SRC decisions, containing limited data from 2025’s SRC1. It is a proof-of-concept only, demonstrating my commitment to delivering this policy within the resource and time constraints of a campaign period, and may contain some inaccuracies.  I look forward to implementing a full decisions database moving forward if elected as your independent General Secretary. Built by Malakai for ANUSA.">
   <!-- Filters -->
   <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search decisions…">
-    <select id="typeFilter">
+    <input   type="text" id="searchInput"  placeholder="Search decisions…">
+    <select  id="typeFilter">
       <option value="">All Types</option>
       <option value="Motion">Motions</option>
       <option value="Procedural">Procedurals</option>
       <option value="Appointment">Appointments</option>
     </select>
-    <select id="statusFilter">
+    <select  id="statusFilter">
       <option value="">All Outcomes</option>
       <option value="Passed">Passed</option>
       <option value="Failed">Failed</option>
     </select>
   </div>
 
-  <!-- Main Cards -->
+  <!-- Cards Grid -->
   <main>
-    <div class="cards-container" id="cardsContainer"></div>
+    <div id="cardsContainer" class="cards-container"></div>
   </main>
 
   <!-- Detail Modal -->
-  <div class="modal" id="detailModal">
+  <div id="detailModal" class="modal">
     <div class="modal-content">
-      <span class="close-btn" id="modalClose">&times;</span>
+      <span id="modalClose" class="close-btn">&times;</span>
       <h2 id="detailTitle"></h2>
-      <p id="detailSummary"></p>
+<div id="detailSummary"></div>
       <ul>
         <li><strong>Mover:</strong> <span id="detailMover"></span></li>
         <li><strong>Seconder:</strong> <span id="detailSeconder"></span></li>
+        <li><strong>Type:</strong> <span id="detailType"></span></li>
+        <li><strong>Status:</strong> <span id="detailStatus"></span></li>
         <li><strong>Meeting:</strong> <span id="detailMeeting"></span></li>
-        <li><strong>Full Proposal:</strong> <span id="detailFullText"></span></li>
-        <li><strong>Amendments:</strong><ul id="detailAmendmentsList"></ul></li>
+      </ul>
+      <div class="full-text-block">
+  <strong>Action:</strong>
+  <div id="detailFullText" class="full-text-container"></div>
+</div>
+      <ul>
+        <li><strong>Amendments:</strong>
+          <ul id="detailAmendmentsList"></ul>
+        </li>
       </ul>
     </div>
   </div>
 
-  <!-- Vite entry point -->
+  <div id="readOnlyDisclaimerModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="roDisclaimerTitle">
+    <span id="roDisclaimerClose" class="close-btn" aria-label="Close">&times;</span>
+    <h2 id="roDisclaimerTitle">Site disclaimer</h2>
+    <p id="roDisclaimerText" style="margin:.5rem 0 1rem;color:#555;white-space:pre-wrap;"></p>
+    <button id="roDisclaimerOk" style="background:#00663e;border:1px solid #00663e;color:#fff;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;cursor:pointer;">
+      I understand
+    </button>
+  </div>
+</div>
+  <!-- Your Vite-built script modules -->
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

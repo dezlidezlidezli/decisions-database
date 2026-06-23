@@ -6,88 +6,355 @@
   <title>Meeting Decisions Database</title>
   <style>
     /* General Reset */
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;background:#f9f9f9;color:#333}
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body { font-family:Arial,sans-serif; background:#f9f9f9; color:#333 }
+#detailSummary {
+  white-space: pre-wrap;
+    margin-bottom: 1rem;
+
+}
+
+#detailSummary p {
+  margin-bottom: 1rem;
+}
+
     /* Header */
-    .site-header{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);position:sticky;top:0;z-index:1000}
-    .site-header .container{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem}
-    .site-header .logo{font-size:1.25rem;font-weight:bold;color:#00663e;text-decoration:none}
+    .site-header {
+      background:#fff;
+      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+      position:sticky; top:0; z-index:1000;
+    }
+    .site-header .container {
+      max-width:1200px;
+      margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem 1rem;
+    }
+    .site-header .logo {
+      font-size:1.25rem;
+      font-weight:bold;
+      color:#00663e;
+      text-decoration:none;
+    }
+
     /* Filters */
-    .filters{display:flex;max-width:1200px;margin:1rem auto;padding:0 1rem;gap:1rem}
-    .filters input,.filters select{flex:1;padding:.5rem;font-size:.9rem}
-    /* Cards */
-    main{max-width:1200px;margin:0 auto 2rem;padding:0 1rem}
-    .cards-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
-    .card{background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:1rem;cursor:pointer;transition:transform .2s}
-    .card:hover{transform:translateY(-2px)}
-    .card h3{font-size:1.1rem;margin-bottom:.5rem;color:#00663e}
-    .card p{font-size:.9rem;color:#555;margin-bottom:.5rem}
-    .card-meta{font-size:.8rem;color:#777}
+    .filters {
+      display:flex;
+      max-width:1200px;
+      margin:1rem auto;
+      padding:0 1rem;
+      gap:1rem;
+    }
+    .filters input,
+    .filters select {
+      flex:1;
+      padding:.5rem;
+      font-size:.9rem;
+    }
+
+    /* Cards grid */
+    main {
+      max-width:1200px;
+      margin:0 auto 2rem;
+      padding:0 1rem;
+    }
+    .cards-container {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:1rem;
+    }
+    .card {
+      background:#fff;
+      border-radius:6px;
+      box-shadow:0 1px 3px rgba(0,0,0,0.1);
+      padding:1rem;
+      cursor:pointer;
+      transition:transform .2s;
+    }
+    .card:hover { transform:translateY(-2px) }
+    .card h3 { font-size:1.1rem; margin-bottom:.5rem; color:#00663e }
+    .card p  { font-size:.9rem; color:#555; margin-bottom:.5rem }
+    .card-meta {
+      font-size:.8rem;
+      color:#777;
+      margin-top:.25rem;
+    }
+
     /* Modal */
-    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:1rem}
-    .modal-content{background:#fff;border-radius:6px;width:100%;max-width:500px;padding:1.5rem;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
-    .modal-content h2{font-size:1.25rem;margin-bottom:.5rem;color:#00663e}
-    .modal-content p{font-size:.9rem;color:#555}
-    .modal-content ul{list-style:none;margin-top:1rem;padding-left:0}
-    .modal-content li{margin-bottom:.5rem;font-size:.9rem}
-    .modal-content strong{display:inline-block;width:140px}
-    .amendment-status{display:inline-block;width:1em;text-align:center;font-weight:bold;margin-right:.5rem}
-    .amendment-status.passed{color:green}
-    .amendment-status.failed{color:red}
-    .close-btn{position:absolute;top:.5rem;right:1rem;font-size:1.5rem;font-weight:bold;color:#999;cursor:pointer}
-    .close-btn:hover{color:#333}
+    .modal {
+      display:none;
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.6);
+      align-items:center; justify-content:center;
+      padding:1rem;
+    }
+.modal-content {
+  background:#fff;
+  border-radius:6px;
+  width:100%; max-width:600px;
+  padding:1.5rem 1.5rem 2rem 1.5rem; /* top, right, bottom, left */
+  position:relative;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+    .modal-content h2 {
+      font-size:1.5rem; margin-bottom:.5rem; color:#00663e;
+    }
+    .modal-content p { font-size:.95rem; color:#555; }
+    .modal-content ul { list-style:none; margin-top:1rem; padding-left:0 }
+    .modal-content li {
+      margin-bottom:.5rem; font-size:.9rem; display:flex; align-items:center;
+    }
+    .modal-content strong { display:inline-block; width:120px }
+    .amendment-status {
+      display:inline-block;
+      width:1em; text-align:center; font-weight:bold;
+      margin-right:.5rem;
+    }
+.full-text-container li {
+  display: list-item;       /* restore markers */
+  margin-bottom: 0.4rem;    /* your original spacing */
+}
+.full-text-container ol {
+  list-style-type: decimal; /* ensure numeric markers */
+  margin: 0.5rem 0 0.5rem 1.2rem; /* indent like you want */
+  padding-left: 0;
+}
+    .amendment-status.passed { color:green }
+    .amendment-status.failed { color:red }
+    .close-btn {
+      position:absolute;
+      top:.5rem; right:1rem;
+      font-size:1.5rem; font-weight:bold;
+      color:#999; cursor:pointer;
+    }
+    .close-btn:hover { color:#333 }
+
+    /* — New: Amendment type badges — */
+    .amendment-type {
+      display:inline-block;
+      padding:0.2em 0.5em;
+      border-radius:4px;
+      font-size:.75rem;
+      margin-left:.5rem;
+      vertical-align:middle;
+    }
+    .amendment-type.friendly {
+      background:#e0f8e9;
+      color:#047a37;
+    }
+    .amendment-type.unfriendly {
+      background:#fde0e0;
+      color:#a30e0e;
+    }
+    /* — end new badge styles — */
+    /* Apply flex only to the amendment list items */
+#detailAmendmentsList > li {
+  display: flex;
+  align-items: center;
+  /* optional: add a little vertical breathing room */
+  margin-bottom: 0.5rem;
+}
+
+/* Space between badge and text */
+#detailAmendmentsList .amendment-type {
+  margin-right: 0.5rem;
+}
+
+/* Space between text and status icon */
+#detailAmendmentsList .amendment-status {
+  margin-left: 0.5rem;
+}
+.full-text-block {
+  margin: 1rem 0;            /* spacing above/below */
+}
+.full-text-block strong {
+  display: block;
+  font-size: 0.9rem;      /* match the .modal-content li font-size */
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: inherit;         /* keeps the same color */
+}
+
+.modal {
+  overflow: hidden;
+  z-index: 1100;
+
+  /* position modal slightly below header and allow some breathing room below */
+  align-items: flex-start;
+  padding: 4rem 1rem 4rem 1rem; /* top, right, bottom, left */
+}
+
+.modal-content {
+  max-height: calc(100vh - 6rem); /* leaves 3rem above and below */
+  margin-bottom: 2rem;            /* adds visual gap below */
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 600px;
+  padding: 1.5rem;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
   </style>
-  <script type="module" crossorigin>(function(){const o=document.createElement("link").relList;if(o&&o.supports&&o.supports("modulepreload"))return;for(const e of document.querySelectorAll('link[rel="modulepreload"]'))s(e);new MutationObserver(e=>{for(const t of e)if(t.type==="childList")for(const i of t.addedNodes)i.tagName==="LINK"&&i.rel==="modulepreload"&&s(i)}).observe(document,{childList:!0,subtree:!0});function n(e){const t={};return e.integrity&&(t.integrity=e.integrity),e.referrerPolicy&&(t.referrerPolicy=e.referrerPolicy),e.crossOrigin==="use-credentials"?t.credentials="include":e.crossOrigin==="anonymous"?t.credentials="omit":t.credentials="same-origin",t}function s(e){if(e.ep)return;e.ep=!0;const t=n(e);fetch(e.href,t)}})();const d={id:"7.1",meeting:"2025-02-26",title:"Approval of 2025 budget",mover:"Alice Smith",seconder:"Bob Jones",fullText:"That the 2025 budget be approved as tabled.",amendments:[{id:"7.1a",text:"…"}]},a=Object.freeze(Object.defineProperty({__proto__:null,default:d},Symbol.toStringTag,{value:"Module"})),u={id:"7.3a",meeting:"2025-02-26",title:"Proposal for New Membership Benefits",mover:"Eve Green",seconder:"Frank Blue",fullText:"That a new membership benefit package be introduced including discounted event tickets and exclusive newsletters.",amendments:[{id:"7.3b",text:"Amend to include a biannual member satisfaction survey."}]},f=Object.freeze(Object.defineProperty({__proto__:null,default:u},Symbol.toStringTag,{value:"Module"})),l=Object.assign({"../data/decisions/2025/2025-02-26/7.1.js":a,"../data/decisions/2025/2025-08-14/7.3.js":f});console.log("🔍 Found module files:",Object.keys(l));const c={};for(const r of Object.keys(l)){const o=r.split("/"),n=o[3],s=o[4],e=l[r].default;c[n]??={},c[n][s]??=[],c[n][s].push(e)}console.log("📦 decisionsByMeeting:",c);window.addEventListener("load",()=>{console.log("✅ window.load fired");const r=new Date().getFullYear().toString();console.log("📅 Current year:",r);const o=c[r];console.log("📋 Meetings this year:",o);const n=document.getElementById("cardsContainer");if(console.log("📌 cardsContainer element:",n),!n){console.error("❌ No #cardsContainer found in DOM – check your index.html!");return}if(!o){console.warn(`⚠️ No meetings found for year ${r}`);return}for(const[s,e]of Object.entries(o)){console.log(`👉 Rendering meeting ${s}`,e);for(const t of e){const i=document.createElement("div");i.className="card",i.innerHTML=`
-        <h3>${t.id}: ${t.title}</h3>
-        <p><strong>Mover:</strong> ${t.mover} &nbsp; <strong>Seconder:</strong> ${t.seconder}</p>
-        <p>${t.fullText}</p>
-      `,n.appendChild(i)}}});</script>
+  <script type="module" crossorigin>(function(){const i=document.createElement("link").relList;if(i&&i.supports&&i.supports("modulepreload"))return;for(const t of document.querySelectorAll('link[rel="modulepreload"]'))o(t);new MutationObserver(t=>{for(const a of t)if(a.type==="childList")for(const r of a.addedNodes)r.tagName==="LINK"&&r.rel==="modulepreload"&&o(r)}).observe(document,{childList:!0,subtree:!0});function l(t){const a={};return t.integrity&&(a.integrity=t.integrity),t.referrerPolicy&&(a.referrerPolicy=t.referrerPolicy),t.crossOrigin==="use-credentials"?a.credentials="include":t.crossOrigin==="anonymous"?a.credentials="omit":a.credentials="same-origin",a}function o(t){if(t.ep)return;t.ep=!0;const a=l(t);fetch(t.href,a)}})();const T={id:"2025-SRC1-7.1",meeting:"2025-02-26",title:"Environment Department Report",summary:"",preamble:`The final copy of the Environment Department Report is being presented at SRC 1, 2025.
+
+The report can be found here: https://anusa.com.au/about/governance/`,fullText:`1. The ANUSA SRC notes the report into the Environment Department.
+2. The SRC supports reforms to ensure that the environment remains at the core of ANUSA’s environmental activism.
+3. The SRC supports the transition of the Environment Department to an Environment Committee focused on environmental work.
+4. The SRC supports measures that have been taken to ensure all spending of the Association abides by the ANUSA Constitution, all relevant regulations, and any other instruments created under the Constitution or regulations.`,mover:"Will Burfoot",seconder:"Kiera Rosenberg",type:"Motion",status:"Passed",amendments:[{id:"7.1a",text:"Strike Action Point 3",passed:!1,friendly:!1}]},N=Object.freeze(Object.defineProperty({__proto__:null,default:T},Symbol.toStringTag,{value:"Module"})),U={id:"2025-SRC1-7.10",meeting:"2025-02-26",title:"ANUSA stands with staff and students against the course cuts at ANU",summary:"",preamble:`At the end of last year, Vice-Chancellor Genevieve Bell and the ANU executive announced their plans for a new round of job and expenditure cuts - $250 million by 1st of January 2026, which will include $150 million worth of cut salaries according to the Australian Financial Review.
+This amount is worth about 638 full time or equivalent positions at the university. This number, however, may be deceptive. The number of job losses could become much higher if ANU focuses on cutting the much-less well paid part-time and casual jobs at the university. This is already affecting students, who are seeing their majors cut and class sizes double. This is all the while the university management sits comfortably, with Genevieve Bell earning a salary of over $1 million AUD.
+Student and staff testimonials have already expressed their frustration.
+"The amount of courses that I wanted to take but couldn't because it wasn't available for the year are insane. I'm scared for my environment degree to not having reached its full potential because of the amount of courses I'll miss especially since being separated from the college of science. As an international student that pays the same hefty bills, it d be nice to do justice to my tuition fees. If I can't get the education that l pay for then there's no right for the university to charge me so much every year. There's no reason for the courses to be of the same amount as before the budget cuts because we don't have access to the same level of resources."
+"I had applied to the university in May 2024, intending to study a BSc majoring in Geography. I applied because of positive testimonials about this course and its high rankings. Several weeks after accepting my offer, the Geography major was removed through an academic restructuring. I was forced to study an alternative (and less preferred) major."
+"The subject I was hired to teach has been cut. As staff, we've been told to expect larger class sizes, no sessional staff (who usually help with tutorials and marking). We've had no transparency on why these cuts are necessary given the University has over $1.6 billion in liquid assets."
+Our student union has a duty to challenge these attacks on staff and students by university management. Students and staff should not have to ensure the profitability of ANU.`,fullText:`1. The ANUSA SRC stands in solidarity with staff and students as they fight back against the course cuts at ANU.
+2. The ANUSA SRC condemns Vice-Chancellor Genevieve Bell and ANU university management for their attacks on staff and students.
+3. The ANUSA SRC calls for all ANU executives to reduce their salary to the median ANU salary of $82,000.
+4. The ANUSA SRC will endorse the student-staff rally on the 13th of March 2025 at 1pm.`,mover:"Ell Lappin",seconder:"Lucy Chapman-Kelly",type:"Motion",status:"Passed",amendments:[{id:"7.10a",text:"Strike “to the median ANU salary of $82,000” from Action 3",passed:!0,friendly:!1}]},E=Object.freeze(Object.defineProperty({__proto__:null,default:U},Symbol.toStringTag,{value:"Module"})),k={id:"2025-SRC1-7.11",meeting:"2025-02-26",title:"Save The Environment Collective",summary:"",preamble:`The Environment Collective has been an important student activist organising space for 50 years. It has been core to organising ANU student involvement in many landmark protest movements for the environment and interrelated issues such as Indigenous land rights and anti-war activism. These include the anti-uranium mining movement in the 1970s, the fight against the Jabiluka uranium mine on Indigenous land, the anti-Iraq war movement and the 2019 school strikes for climate among many others. Without the democratic organising space of the collective and the resources that the office provided, ANU student involvement in these historic movements would have been greatly reduced.
+This is the space that the ANUSA executive is currently trying to rob students of. They are pushing for the collective to be abolished. This would reduce the independence and budget of the Environment officer position.
+The proposed changes would remove one of the last spaces that any student at ANU can come to with ideas for campaigns to engage in and be provided with material resources to support these campaigns. It is anti-democratic to abolish this space and to restrict what campaigns the office can run to whatever the executive politically agrees with.
+If this was the state of affairs in 2019 there would have been no uni student contingents to the School Strikes in 2019, as the executive at the time didn't support the university contingents to the strikes. It was the environment collective that provided the resources and the platform to promote these student contingents. The uni student contingents were then able to provide an avenue for uni students to engage in the school strikes, and not just ANU students but UC and ACU students as well.
+The other argument that the ANUSA executive is waging is that the Environment Collective has been too "political" and has not done enough environmental activism. What this really means is restricting the campaigning of the Collective to environmental activism the executive deems to be politically acceptable. Campaigns around Indigenous land rights, against environmentally destructive wars and for refugee rights as the climate crisis creates millions of refugees are apparently "too political". But the history of environmental activism shows the opposite. The fight for climate justice has always meant taking up all of these issues, and to argue otherwise is not an argument "against politics", but an argument for right wing politics.
+The ANU Environment Collective is an important institution on campus that has provided democratic organising spaces for environmentally minded students to campaign against the destruction of our climate and many other connected issues. This institution must be defended.
+A testament to the importance of the Environment Collective from Dr Ben Keaney Palaeo-ecologist and ANU alumni: 
+"It is important to retain this space for students that are interested in Environmental issues, to have a voice within the students association and more broadly in the ANU community. The awareness of environmental issues fostered by the Environment Collective is a big
+difference between the ANU and other universities in Canberra, and has helped shape the careers of generations environmentalists working throughout Australia and the world."`,fullText:`1. The ANUSA SRC affirms the importance of democratic activist spaces within the student union. 
+2. The ANUSA SRC opposes the abolition of the Environment Collective.`,mover:"Nick Reich",seconder:"Sarah Strange",type:"Motion",status:"Failed",amendments:[]},j=Object.freeze(Object.defineProperty({__proto__:null,default:k},Symbol.toStringTag,{value:"Module"})),x={id:"2025-SRC1-7.12",meeting:"2025-02-26",title:"The Climate Movement is Intersectional",summary:"",preamble:`The climate movement is intersectional. In particular, the movement is inseparable from Land Back causes and movements here is so-called 'Australia' and across the globe.
+Climate change and the climate crisis do not exist in isolation. The situation in 2025 is inextricably linked to industry and capitalism (in many ways including direct emissions), racism and colonialism (in many ways including that communities of people of colour are more likely to be located in areas with heavy pollution and face health consequences).
+Climate security cannot be achieved without climate justice, which involves reversing the historically uneven burdens between nations to better reflect their historical emissions and capacity to respond to the climate crisis. Climate justice necessitates solidarity with Indigenous people across the world, whose communities are often hit first and hardest by the climate crisis. Therefore, climate justice also necessitates tangible solidarity with other justice movements, including supporting actions organised by people fighting for those causes. This is not a new concept, but a continuation of ANUSA's long history of supporting causes beyond, but connected to, tertiary education activism (for example, the transgender youth health care rallies in February 2025).
+Land back simultaneously acknowledges the violent history of colonialism, and begins to undo the systems that harm Indigenous people and their land. It is impossible to support climate justice in isolation, without supporting land back movements here and around the world, and tangibly standing in solidarity with Indigenous peoples.
+NB: https://lakotalaw.org/news/2020-08-14/land-back-climate-justice https://www.commonground.org.au/article/land-back https://climatepromise.undp.org/news-and-stories/climate-change-matter-justice-heres-why`,fullText:`1. The SRC affirms that the climate justice movement is intersectional with other social justice causes, including but not limited to Indigenous liberation and Land Back.
+2. Therefore, the SRC affirms that the work of ANUSA’s climate activism roles (i.e. the Environment Officer and Environment Collective) should similarly support these intersectional causes with their resources, subject to all constitutional and SSAF obligations.`,mover:"Phoebe Denham",seconder:"Malachi Bayley",type:"Motion",status:"Passed",amendments:[{id:"7.12a",text:"Add “subject to all constitutional and SSAF obligations” to the end of action point 2.",passed:!0,friendly:!0}]},R=Object.freeze(Object.defineProperty({__proto__:null,default:x},Symbol.toStringTag,{value:"Module"})),P={id:"2025-SRC1-7.2",meeting:"2025-02-26",title:"ANUSA Privacy Policy",summary:"",preamble:`ANUSA is required under the federal Privacy Act to have a privacy policy. The attached policy would meet this requirement and give clarity to students on how ANUSA collects, protects and uses personal information, and where personal information might be disclosed. The policy includes information about accessing personal information and complaints processes. The draft has been prepared in accordance with Australian Privacy Principles which apply to ANUSA under the Privacy Act. ANUSA staff have been provided with an opportunity to provide feedback on the draft policy and no changes were requested.
+
+The Draft Privacy Policy can be accessed through this link.`,fullText:"1. The SRC adopts the draft privacy policy as a policy of the Association.",mover:"Will Burfoot",seconder:"Hayden O’Brien",type:"Motion",status:"Passed",amendments:[]},I=Object.freeze(Object.defineProperty({__proto__:null,default:P},Symbol.toStringTag,{value:"Module"})),M={id:"2025-SRC1-7.3",meeting:"2025-02-26",title:"ANUSA Student Code of Conduct",summary:"",preamble:`Time and time again we hear - and have heard - that ANUSA spaces often feel inaccessible, tense, and even unsafe. It is incredibly important that all ANUSA spaces, including democratic ones, are accessible to every single student. It is our duty to our many thousands of members that all feel safe to come into ANUSA’s spaces.
+
+A Student Code of Conduct sets clear boundaries on acceptable behaviours and ensures that we can make ANUSA spaces safe for everyone. At the same time, it means there is greater clarity over what can get you removed from a space and greater guidelines for naming at meetings. This ensures there’s clarity over what rules exist and how they are to be enforced. It is imperative for our Association that we have a detailed and specific Code of Conduct. As a policy of the Association, this is a document that can be adjusted and improved by the SRC throughout the year as needed. This policy is part of helping to set a better culture and behaviour in all ANUSA spaces.
+
+The Draft Student Code of Conduct can be accessed through this link.`,fullText:"1. The SRC adopts the draft Student Code of Conduct as a policy of the Association.",mover:"Will Burfoot",seconder:"Vaishnavi Gangarapu",type:"Motion",status:"Passed",amendments:[]},O=Object.freeze(Object.defineProperty({__proto__:null,default:M},Symbol.toStringTag,{value:"Module"})),B={id:"2025-SRC1-7.4",meeting:"2025-02-26",title:"Clubs Affiliation",summary:"",preamble:`The following is the list of clubs approved for affiliation.
+
+Clubs Approved for Affiliation
+
+ANU Computer Science Students' Association
+ANU Earth and Marine Science Society
+ANU Jazz Society
+ANU Anime and Gaming Society
+...
+MySupport ANU`,fullText:"1. The SRC approves the list of clubs in this motion’s preamble for affiliation with ANUSA.",mover:"Harrison Oates",seconder:"Will Burfoot",type:"Motion",status:"Passed",amendments:[]},L=Object.freeze(Object.defineProperty({__proto__:null,default:B},Symbol.toStringTag,{value:"Module"})),D={id:"2025-SRC1-7.5",meeting:"2025-02-26",title:"Redemption of Mandatory Attendance",summary:"",preamble:`The dire financial situation of the ANU has resulted in the continual withdrawal of the number of tutorials offered, especially in those courses where attendance is mandatory and contributes directly to student grades. As a result, working students are left bereft of flexibility in their timetables and are forced to choose between their absolutely necessary income and their academic performance.
+
+Attending mandatory tutorials, then, is increasingly becoming unrealistic for a majority of the student population, in particular working students who are negatively and disproportionately impacted.
+
+A solution would be following in the path of redeemable exams, by giving students the ability to get the weighting of tutorial participation adjusted through empowering the course convener with the ability to make accessibility accommodations for students. In making mandatory attendance marks redeemable across all relevant Colleges, by adding the grade weight of missed attendance onto different assessment piece's, ANUSA reaffirms its commitment to ensuring the accessibility and opportunity for academic excellence remains open to each and every student. Currently, tutorials are largely unredeemable due to not meeting the 20% weighting threshold demanded by ECAs and limitations in the ECAs scope in supporting working students. Redeemable tutorial scores must be pursued as a form of universal accessibility which gives the flexibility for students to request adjustments from their conveners. Furthermore, redeemable tutorials should by no means be an indication to a university focused on course and staff cuts to reduce the number of tutorials, as seen in other universities such as the University of Adelaide. Therefore, beyond making tutorials redeemable the university should be looking at expanding the number of tutorial sessions offered outside of working hours. Changes such as these empower course conveners and students to achieve the best accommodations in their studies without having to rely on a bureaucratic and exhaustive process in the ECA/access to EAPs.
+
+We call on the SRC to unite in a wide-scale effort across Academic Colleges to push for the implementation of redemptive mandatory attendance.`,fullText:`1. As ANUSA policy, the SRC commits to fully supporting the pursuit of mandatory attendance grades being redeemable across all relevant Colleges through the form of academic accommodations by request of students.
+2. The ANUSA SRC reaffirms its commitment to increasing academic accessibility for all students, regardless of their personal circumstances, and that no course or staff cuts is tolerated in the pursuit of greater accessibility for students.
+3. The ANUSA SRC calls for the introduction of at least one tutorial session per course available outside of working hours when able.`,mover:"Darcy Oates",seconder:"Charley Ellwood",type:"Motion",status:"Passed",amendments:[]},$=Object.freeze(Object.defineProperty({__proto__:null,default:D},Symbol.toStringTag,{value:"Module"})),F={id:"2025-SRC1-7.7",meeting:"2025-02-26",title:"ANU ZERO",summary:"",preamble:`The ANU's Socially Responsible Investments Policy, adopted after years of persistent student pressure, mostly from the Environment Collective, remains in shambles. The policy prohibits investment in companies that make 20% or more of their revenue from coal, but it says nothing about oil or gas. The policy prohibits investment in companies that make civilian weapons like handguns, but not companies which make military weapons which are many times more destructive.
+
+Recently, we found that the ANU was investing over $35 million in projects that break their own emissions rules. In addition to that, ANU's most recent documents show a $32.7 million investment in BHP, one of Australia's biggest producers of coal and the owner of the massive Mount Albert coal mine. They also show a $6.7 million dollar investment in Australia's biggest oil and gas producer, Woodside Energy, which is somehow within the 'Socially Responsible' policy. We say all of those numbers should be ZERO.
+
+Our ANU ZERO campaign demands that the ANU
+
+1. Amend the Socially Responsible Investments Policy to allow ZERO investment in companies that are major producers of oil and gas, and coal, such as BHP and Woodside.
+2. Ensure that the ANU makes ZERO new investments that fail to comply with their own emissions reduction targets.
+3. Amend the Policy to allow ZERO investments in weapons of war.`,fullText:`1. As a policy of the Association, the ANUSA SRC supports the demands above, which have already been signed by over 100 people.
+2. The ANUSA SRC requests ANUSA use social media and the ANUSA newsletter to promote the ANU ZERO online petition which can be found here: ANU ZERO: Demand Zero Investment in Fossil Fuels | Megaphone Australia 
+3. The ANUSA SRC asks the undergraduate and postgraduate representatives on University Council to press these demands.`,mover:"Sarah Strange",seconder:"Blair Doran",type:"Motion",status:"Passed",amendments:[]},z=Object.freeze(Object.defineProperty({__proto__:null,default:F},Symbol.toStringTag,{value:"Module"})),W={id:"2025-SRC1-7.8",meeting:"2025-02-26",title:"ANUSA Opposes the Postering Policy",summary:"",preamble:`In late 2023, ANU proposed a new 'Postering and Advertising Policy,' which was widely criticised for restricting student expression. At SRC8 2024, ANUSA passed a motion outlining three key concerns:
+
+The policy should not be implemented in its current form. Instead, ANU should engage in an open consultation process to determine a fair and balanced approach to postering.
+
+Any future policy must uphold principles of procedural fairness and transparency.
+
+Postering should be permitted by default, with restrictions applied only where necessary, rather than imposing a blanket ban.
+
+Despite these concerns, ANU introduced a revised 'Posting on ANU Campus' policy (ANUP_8406859) on February 6th, just before graduation and O-Week. While this version is less restrictive than the original proposal, it still significantly limits students' ability to promote events and initiatives by confining posters to a small number of billboards, many of which are poorly located.
+
+Postering is a crucial part of ANU's social and cultural life, allowing students to find out about events, activism, and opportunities on campus. Restricting where and how students can poster not only impacts clubs and societies but also has broader implications for student advocacy and protest rights. The ability to share information freely is essential to maintaining a vibrant campus where students can organise, express their views, and engage in collective action without unnecessary barriers.
+
+The policy is set for review on August 6th, giving time and opportunity for students to push for necessary changes.`,fullText:`1. As ANUSA Policy, the SRC opposes the Postering Policy.
+2. The SRC requests the Executive provide students with clear information about the policy and how they can contribute to efforts to reform it.`,mover:"Harrison Oates",seconder:"Josh Shaw",type:"Motion",status:"Passed",amendments:[]},G=Object.freeze(Object.defineProperty({__proto__:null,default:W},Symbol.toStringTag,{value:"Module"})),H={id:"2025-SRC1-7.9",meeting:"2025-02-26",title:"ANU students deserve healthcare",summary:"",preamble:`One of the most important services ANU provides to its students is the ANU Medical Centre.
+Having a bulk-billed medical centre on campus where students can access a GP for convenient medical advice and be able to manage their EAPs, Mental Health plans, and Worker's Comp claims is a vital service that enhances student rights and their healthcare, and is in line with various other Go8 Unis that have on campus medical centres.
+Of course, in the context of increasing cuts by ANU's management that are decreasing student wellbeing, it can be obvious why such a vital service would not be high on the priorities of current management.
+
+At the beginning of last year, the Medical Centre had 6 GPs. Now, it has 1. Part time GPs have resigned en masse, and the 1 remaining GP plans to resign. This is a bleak outlook for students, both for those who are reliant on the Medical Centre for day to day services and for those who are in dire medical need. ANU has claimed that they are looking for new GPs, but are yet to find any, and are currently recommending students create alternative arrangements. With the ACT's bulk billing rates in such a shocking state and continuing to decline both territory and nation wide, it is not an acceptable state of affairs for students to be forced to find and pay for off-campus healthcare when they have every right to expect better from the services their own university should offer.`,fullText:`1. The ANUSA SRC calls for the ANU to maintain the hiring of new GPs
+2. The ANUSA SRC affirms the importance of the ANU Medical Centre and providing medical services to students
+3. The ANUSA SRC calls upon the ANUSA President to act on all levels possible to ensure high levels of student healthcare can be maintained
+4. The ANUSA SRC calls upon the ANU Medical Centre to continue prescribing ADHD medication`,mover:"Blair Doran",seconder:"Seungbin Kang",type:"Motion",status:"Passed",amendments:[]},q=Object.freeze(Object.defineProperty({__proto__:null,default:H},Symbol.toStringTag,{value:"Module"})),y=Object.assign({"../data/decisions/2025/2025-02-26/7.1.js":N,"../data/decisions/2025/2025-02-26/7.10.js":E,"../data/decisions/2025/2025-02-26/7.11.js":j,"../data/decisions/2025/2025-02-26/7.12.js":R,"../data/decisions/2025/2025-02-26/7.2.js":I,"../data/decisions/2025/2025-02-26/7.3.js":O,"../data/decisions/2025/2025-02-26/7.4.js":L,"../data/decisions/2025/2025-02-26/7.5.js":$,"../data/decisions/2025/2025-02-26/7.7.js":z,"../data/decisions/2025/2025-02-26/7.8.js":G,"../data/decisions/2025/2025-02-26/7.9.js":q});console.log("🔍 decision files found:",Object.keys(y));const u={};for(const n of Object.keys(y)){const i=n.split("/"),l=i[3],o=i[4],t=y[n].default;u[l]||={},u[l][o]||=[],u[l][o].push(t)}console.log("📦 decisionsByMeeting:",u);const g=document.getElementById("cardsContainer"),b=document.getElementById("searchInput"),A=document.getElementById("typeFilter"),w=document.getElementById("statusFilter"),h=document.getElementById("detailModal"),Z=document.getElementById("modalClose"),K=document.getElementById("detailTitle"),v=document.getElementById("detailSummary"),V=document.getElementById("detailMover"),J=document.getElementById("detailSeconder"),Q=document.getElementById("detailType"),Y=document.getElementById("detailStatus"),X=document.getElementById("detailMeeting");document.getElementById("detailFullText");const f=document.getElementById("detailAmendmentsList");function m(){const l=b.value.trim().toLowerCase().replace(/[-\W]+/g," ").trim().split(/\s+/).filter(Boolean),o=A.value,t=w.value;g.innerHTML="";const a=new Date().getFullYear().toString(),r=u[a]||{};Object.values(r).flat().filter(e=>{const c=[e.id,e.title,e.summary,e.preamble,e.mover,e.seconder,e.type,e.status,e.fullText,...(e.amendments||[]).map(p=>p.text)].filter(Boolean).join(" ").toLowerCase().replace(/[-\W]+/g," ").trim(),d=l.every(p=>c.includes(p)),_=!o||e.type===o,C=!t||e.status===t;return d&&_&&C}).forEach(e=>{const c=document.createElement("div");c.className="card",c.innerHTML=`
+        <h3>${e.id}: ${e.title}</h3>
+        ${e.summary?`<p>${e.summary}</p>`:""}
+        <p class="card-meta">
+          <strong>${e.type}</strong> |
+          Status: <span class="${e.status.toLowerCase()}">${e.status}</span>
+        </p>
+      `,c.addEventListener("click",()=>ee(e)),g.appendChild(c)})}function ee(n){document.body.style.overflow="hidden",h.style.display="flex",K.textContent=`${n.id}: ${n.title}`;const i=n.preamble||n.summary||"";if(typeof i=="string"&&i.trim().length>0){const s=i.split(`
+`);v.innerHTML=s.map(e=>`<p>${e.trim()}</p>`).join("")}else v.innerHTML="<p><em>No summary available.</em></p>";V.textContent=n.mover,J.textContent=n.seconder,Q.textContent=n.type,Y.textContent=n.status,X.textContent=n.meeting;const l=document.getElementById("detailFullText");l.innerHTML="";const o=n.fullText.trim(),t=o.split(/^\d+\.\s*/gm).filter(Boolean).map(s=>s.trim());t.length===1&&Object.assign(t,o.split(/\n{2,}/).map(s=>s.trim()).filter(Boolean));const a=document.createElement("ol");t.forEach(s=>{const e=document.createElement("li");e.textContent=s,a.appendChild(e)}),l.appendChild(a),f.innerHTML="",(n.amendments||[]).forEach(s=>{const e=document.createElement("li"),c=document.createElement("span");c.className=`amendment-type ${s.friendly?"friendly":"unfriendly"}`,c.textContent=s.friendly?"Friendly":"Unfriendly",e.appendChild(c),e.append(document.createTextNode(s.text));const d=document.createElement("span");d.className=`amendment-status ${s.passed?"passed":"failed"}`,d.textContent=s.passed?"✓":"✗",e.appendChild(d),f.appendChild(e)});const r=f.parentElement;n.amendments&&n.amendments.length>0?r.style.display="":r.style.display="none",h.style.display="flex"}function S(){h.style.display="none",document.body.style.overflow=""}Z.addEventListener("click",S);window.addEventListener("click",n=>{n.target===h&&S()});b.addEventListener("input",m);A.addEventListener("change",m);w.addEventListener("change",m);window.addEventListener("load",m);(function(){const n="disclaimerDismissed_v1",i=document.getElementById("readOnlyDisclaimerModal"),l=document.getElementById("roDisclaimerText"),o=document.getElementById("roDisclaimerClose"),t=document.getElementById("roDisclaimerOk");function a(){i.style.display="flex",i.setAttribute("aria-hidden","false"),t.focus({preventScroll:!1})}function r(){i.style.display="none",i.setAttribute("aria-hidden","true")}function s(){const e=document.body.getAttribute("data-disclaimer")||"";if(!e)return;l.textContent=e,localStorage.getItem(n)==="1"||a(),o.addEventListener("click",r),t.addEventListener("click",()=>{localStorage.setItem(n,"1"),r()}),i.addEventListener("click",d=>{d.target===i&&r()}),document.addEventListener("keydown",d=>{d.key==="Escape"&&i.style.display==="flex"&&r()})}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",s):s()})();</script>
 </head>
 <body>
+
   <!-- Header -->
   <header class="site-header">
     <div class="container">
       <a href="#" class="logo">ANUSA Tracker</a>
     </div>
   </header>
-
+  <body data-disclaimer="This is an unofficial early beta version of a Decisions Database for ANUSA SRC decisions, containing limited data from 2025’s SRC1. It is a proof-of-concept only, demonstrating my commitment to delivering this policy within the resource and time constraints of a campaign period, and may contain some inaccuracies.  I look forward to implementing a full decisions database moving forward if elected as your independent General Secretary. Built by Malakai for ANUSA.">
   <!-- Filters -->
   <div class="filters">
-    <input type="text" id="searchInput" placeholder="Search decisions…">
-    <select id="typeFilter">
+    <input   type="text" id="searchInput"  placeholder="Search decisions…">
+    <select  id="typeFilter">
       <option value="">All Types</option>
       <option value="Motion">Motions</option>
       <option value="Procedural">Procedurals</option>
       <option value="Appointment">Appointments</option>
     </select>
-    <select id="statusFilter">
+    <select  id="statusFilter">
       <option value="">All Outcomes</option>
       <option value="Passed">Passed</option>
       <option value="Failed">Failed</option>
     </select>
   </div>
 
-  <!-- Main Cards -->
+  <!-- Cards Grid -->
   <main>
-    <div class="cards-container" id="cardsContainer"></div>
+    <div id="cardsContainer" class="cards-container"></div>
   </main>
 
   <!-- Detail Modal -->
-  <div class="modal" id="detailModal">
+  <div id="detailModal" class="modal">
     <div class="modal-content">
-      <span class="close-btn" id="modalClose">&times;</span>
+      <span id="modalClose" class="close-btn">&times;</span>
       <h2 id="detailTitle"></h2>
-      <p id="detailSummary"></p>
+<div id="detailSummary"></div>
       <ul>
         <li><strong>Mover:</strong> <span id="detailMover"></span></li>
         <li><strong>Seconder:</strong> <span id="detailSeconder"></span></li>
+        <li><strong>Type:</strong> <span id="detailType"></span></li>
+        <li><strong>Status:</strong> <span id="detailStatus"></span></li>
         <li><strong>Meeting:</strong> <span id="detailMeeting"></span></li>
-        <li><strong>Full Proposal:</strong> <span id="detailFullText"></span></li>
-        <li><strong>Amendments:</strong><ul id="detailAmendmentsList"></ul></li>
+      </ul>
+      <div class="full-text-block">
+  <strong>Action:</strong>
+  <div id="detailFullText" class="full-text-container"></div>
+</div>
+      <ul>
+        <li><strong>Amendments:</strong>
+          <ul id="detailAmendmentsList"></ul>
+        </li>
       </ul>
     </div>
   </div>
 
-  <!-- Vite entry point -->
+  <div id="readOnlyDisclaimerModal" class="modal" aria-hidden="true">
+  <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="roDisclaimerTitle">
+    <span id="roDisclaimerClose" class="close-btn" aria-label="Close">&times;</span>
+    <h2 id="roDisclaimerTitle">Site disclaimer</h2>
+    <p id="roDisclaimerText" style="margin:.5rem 0 1rem;color:#555;white-space:pre-wrap;"></p>
+    <button id="roDisclaimerOk" style="background:#00663e;border:1px solid #00663e;color:#fff;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;cursor:pointer;">
+      I understand
+    </button>
+  </div>
+</div>
+  <!-- Your Vite-built script modules -->
 </body>
 </html>
