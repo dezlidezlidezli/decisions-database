@@ -7,6 +7,7 @@ const listPanel    = document.getElementById('listPanel');
 const detailPanel  = document.getElementById('detailPanel');
 const detailBody   = document.getElementById('detailBody');
 const backBtn      = document.getElementById('backBtn');
+const filtersBar   = document.getElementById('filtersBar');
 const searchInput  = document.getElementById('searchInput');
 const typeFilter   = document.getElementById('typeFilter');
 const statusFilter = document.getElementById('statusFilter');
@@ -38,9 +39,11 @@ function syncPanels() {
   if (isMobile()) {
     listPanel.classList.toggle('mobile-hidden', hasView);
     detailPanel.classList.toggle('mobile-hidden', !hasView);
+    filtersBar.classList.toggle('mobile-hidden', hasView);
   } else {
     listPanel.classList.remove('mobile-hidden');
     detailPanel.classList.remove('mobile-hidden');
+    filtersBar.classList.remove('mobile-hidden');
   }
 }
 

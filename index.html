@@ -302,18 +302,23 @@
     }
     .minutes-link:hover { text-decoration: underline }
 
-    /* ── Disclaimer footer ── */
+    /* ── Disclaimer bar (below header) ── */
     .disclaimer-bar {
       flex-shrink: 0;
       background: #fffbe6;
-      border-top: 1px solid #e8d96a;
-      padding: .45rem 1.5rem;
+      border-bottom: 1px solid #e8d96a;
+      padding: .4rem 1.5rem;
       font-size: .75rem;
       color: #7a6500;
       line-height: 1.5;
     }
     @media (max-width: 640px) {
-      .disclaimer-bar { padding: .45rem 1rem; }
+      .disclaimer-bar { padding: .4rem 1rem; }
+    }
+
+    /* Hide filters on mobile when a detail view is open */
+    @media (max-width: 640px) {
+      .filters.mobile-hidden { display: none; }
     }
 
     /* ── Empty state ── */
@@ -404,7 +409,11 @@
     <a href="#" class="logo">Decisions Database</a>
   </header>
 
-  <div class="filters">
+  <div class="disclaimer-bar">
+    For informational purposes only &mdash; may contain inaccuracies. This is not an official or legal record of meetings. Refer to the minutes linked next to each meeting heading for the authoritative record.
+  </div>
+
+  <div class="filters" id="filtersBar">
     <input type="text" id="searchInput" placeholder="Search decisions…">
     <select id="typeFilter">
       <option value="">All Types</option>
@@ -429,9 +438,6 @@
     </div>
   </div>
 
-  <footer class="disclaimer-bar">
-    For informational purposes only &mdash; may contain inaccuracies. This is not an official or legal record of meetings. Refer to the minutes linked next to each meeting heading for the authoritative record.
-  </footer>
 
   <script type="module" src="/src/main.js"></script>
 </body>
