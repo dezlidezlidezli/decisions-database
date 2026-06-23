@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The SRC affirms that the climate justice movement is intersectional with other social justice causes, including but not limited to Indigenous liberation and Land Back.\n2. Therefore, the SRC affirms that the work of ANUSA’s climate activism roles (i.e. the Environment Officer and Environment Collective) should similarly support these intersectional causes with their resources, subject to all constitutional and SSAF obligations.",
   "mover": "Phoebe Denham",
   "seconder": "Malachi Bayley",
-  "minutesPage": null,
+  "minutesPage": 15,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
@@ -14,7 +14,6 @@ export default {
       "fullText": "",
       "mover": "Kiera Rosenberg",
       "seconder": "",
-  "minutesPage": null,
       "passed": true,
       "friendly": true
     }

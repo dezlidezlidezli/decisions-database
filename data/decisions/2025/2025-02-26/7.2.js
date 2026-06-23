@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The SRC adopts the draft privacy policy as a policy of the Association.",
   "mover": "Will Burfoot",
   "seconder": "Hayden O’Brien",
-  "minutesPage": null,
+  "minutesPage": 17,
   "type": "Motion",
   "status": "Passed",
   "amendments": []
