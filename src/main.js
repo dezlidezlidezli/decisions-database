@@ -1,8 +1,18 @@
 const modules = import.meta.glob('../data/decisions/*/*/*.js', { eager: true });
+const meetingModules = import.meta.glob('../data/decisions/*/*/_meeting.js', { eager: true });
 
-// Build { year: { meeting: [decisions] } }
+// Build meetingMeta: { "2025-02-26": { name, date, location, duration, minutesUrl } }
+const meetingMeta = {};
+for (const [path, mod] of Object.entries(meetingModules)) {
+  const parts = path.split('/');
+  const meetingDate = parts[4];
+  meetingMeta[meetingDate] = mod.default;
+}
+
+// Build { year: { meeting: [decisions] } } — skip _meeting.js files
 const decisionsByMeeting = {};
 for (const path of Object.keys(modules)) {
+  if (path.includes('/_meeting.js')) continue;
   const parts = path.split('/');
   const year = parts[3];
   const meeting = parts[4];
@@ -88,7 +98,8 @@ function renderList() {
 
     const heading = document.createElement('div');
     heading.className = 'meeting-heading';
-    heading.textContent = meeting;
+    const meta = meetingMeta[meeting];
+    heading.textContent = meta ? `${meta.name} — ${meta.date}` : meeting;
     listPanel.appendChild(heading);
 
     for (const d of filtered) {
@@ -107,7 +118,7 @@ function renderList() {
       row.addEventListener('click', () => {
         activeId = d.id;
         renderList();
-        renderDetail(d);
+        renderDetail(d, meeting);
         showDetail();
       });
       listPanel.appendChild(row);
@@ -119,9 +130,11 @@ function renderList() {
   }
 }
 
-function renderDetail(d) {
-  // Preamble/summary paragraphs
-  const preambleText = d.preamble || d.summary || '';
+function renderDetail(d, meetingDate) {
+  const meta = meetingMeta[meetingDate] || {};
+
+  // Preamble paragraphs
+  const preambleText = d.preamble || '';
   const preambleHtml = preambleText.trim()
     ? preambleText.split('\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('')
     : '';
@@ -132,13 +145,32 @@ function renderDetail(d) {
   const listItems = (points.length > 1 ? points : text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean))
     .map(pt => `<li>${pt}</li>`).join('');
 
+  // Meeting meta row
+  const meetingLabel = meta.name ? `${meta.name}${meta.date ? ` — ${meta.date}` : ''}` : (meetingDate || '—');
+  const minutesLink = meta.minutesUrl
+    ? `<a href="${meta.minutesUrl}" target="_blank" rel="noopener" class="minutes-link">View minutes ↗</a>`
+    : '';
+
   // Amendments
-  const amendmentsHtml = (d.amendments || []).map(a => `
+  const amendmentsHtml = (d.amendments || []).map(a => {
+    const fullTextHtml = a.fullText
+      ? `<div class="amendment-full-text">${a.fullText}</div>` : '';
+    const movers = [a.mover, a.seconder].filter(Boolean).join(' / ');
+    const moversHtml = movers
+      ? `<div class="amendment-movers">${movers}</div>` : '';
+    return `
     <li class="amendment-item">
-      <span class="badge ${a.friendly ? 'badge-friendly' : 'badge-unfriendly'}">${a.friendly ? 'Friendly' : 'Unfriendly'}</span>
-      <span class="amendment-text">${a.text}</span>
-      <span class="amendment-result ${a.passed ? 'passed' : 'failed'}">${a.passed ? '✓ Passed' : '✗ Failed'}</span>
-    </li>`).join('');
+      <div class="amendment-main">
+        <div class="amendment-top">
+          <span class="badge ${a.friendly ? 'badge-friendly' : 'badge-unfriendly'}">${a.friendly ? 'Friendly' : 'Unfriendly'}</span>
+          <span class="amendment-text">${a.text}</span>
+          <span class="amendment-result ${a.passed ? 'passed' : 'failed'}">${a.passed ? '✓ Passed' : '✗ Failed'}</span>
+        </div>
+        ${fullTextHtml}
+        ${moversHtml}
+      </div>
+    </li>`;
+  }).join('');
 
   detailBody.innerHTML = `
     <div class="detail-content">
@@ -152,9 +184,14 @@ function renderDetail(d) {
       </div>
 
       <div class="detail-meta-grid">
-        <div class="meta-item"><div class="meta-label">Meeting</div><div class="meta-value">${d.meeting}</div></div>
+        <div class="meta-item">
+          <div class="meta-label">Meeting</div>
+          <div class="meta-value">${meetingLabel}${minutesLink ? `<br>${minutesLink}` : ''}</div>
+        </div>
         <div class="meta-item"><div class="meta-label">Mover</div><div class="meta-value">${d.mover || '—'}</div></div>
         <div class="meta-item"><div class="meta-label">Seconder</div><div class="meta-value">${d.seconder || '—'}</div></div>
+        ${meta.location ? `<div class="meta-item"><div class="meta-label">Location</div><div class="meta-value">${meta.location}</div></div>` : ''}
+        ${meta.duration ? `<div class="meta-item"><div class="meta-label">Duration</div><div class="meta-value">${meta.duration}</div></div>` : ''}
       </div>
 
       ${preambleHtml ? `

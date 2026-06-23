@@ -255,10 +255,7 @@
 
     .amendments-list { list-style: none }
     .amendment-item {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .5rem 0;
+      padding: .6rem 0;
       border-bottom: 1px solid #f0f0f0;
       font-size: .875rem;
     }
@@ -270,6 +267,33 @@
     }
     .amendment-result.passed { color: #166534 }
     .amendment-result.failed { color: #991b1b }
+
+    .amendment-main { flex: 1 }
+    .amendment-top {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .amendment-full-text {
+      margin-top: .4rem;
+      font-size: .85rem;
+      color: #555;
+      line-height: 1.5;
+      padding-left: .25rem;
+      border-left: 2px solid #e0e0e0;
+    }
+    .amendment-movers {
+      margin-top: .25rem;
+      font-size: .78rem;
+      color: #999;
+    }
+    .minutes-link {
+      font-size: .8rem;
+      color: #00663e;
+      text-decoration: none;
+    }
+    .minutes-link:hover { text-decoration: underline }
 
     /* ── Disclaimer modal ── */
     .modal {
