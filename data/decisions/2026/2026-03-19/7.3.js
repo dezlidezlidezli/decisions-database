@@ -5,6 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC calls on the ANU to provide free menstrual products in all campus bathrooms.\n2. The SRC requests that the Executive work with ANU Facilities Management to identify appropriate dispensary locations.\n3. The SRC commits to advocating for ongoing funding for this program in future ANU budget negotiations.",
   "mover": "Eve Tempor",
   "seconder": "Frances Magna",
+  "minutesPage": null,
   "type": "Motion",
   "status": "Passed",
   "amendments": [

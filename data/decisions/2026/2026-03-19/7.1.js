@@ -5,6 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC notes the ongoing housing affordability crisis affecting ANU students.\n2. The SRC calls on the ANU to increase the number of affordable on-campus housing options available to undergraduate students.\n3. The SRC requests that the Executive engage with the ANU Housing Office to advocate for a rent freeze for the 2027 academic year.\n4. The SRC endorses the student-led housing affordability campaign and encourages all students to participate.",
   "mover": "Jane Doe",
   "seconder": "John Smith",
+  "minutesPage": 12,
   "type": "Motion",
   "status": "Passed",
   "amendments": []

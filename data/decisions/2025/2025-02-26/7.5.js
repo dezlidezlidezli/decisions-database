@@ -5,6 +5,7 @@ export default {
   "fullText": "1. As ANUSA policy, the SRC commits to fully supporting the pursuit of mandatory attendance grades being redeemable across all relevant Colleges through the form of academic accommodations by request of students.\n2. The ANUSA SRC reaffirms its commitment to increasing academic accessibility for all students, regardless of their personal circumstances, and that no course or staff cuts is tolerated in the pursuit of greater accessibility for students.\n3. The ANUSA SRC calls for the introduction of at least one tutorial session per course available outside of working hours when able.",
   "mover": "Darcy Oates",
   "seconder": "Charley Ellwood",
+  "minutesPage": null,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
@@ -13,6 +14,7 @@ export default {
       "fullText": "Amend Action 1 to add 'through the form of academic accommodations by request of students'.\nAmend Action 2 to add 'and that no course or staff cuts is tolerated in the pursuit of greater accessibility for students'.\nAdd Action 3: 'The ANUSA SRC calls for the introduction of at least one tutorial session per course available outside of working hours when able.'\nAmend Preamble to extensively expand on the financial and accessibility context for working students.",
       "mover": "Seungbin Kang",
       "seconder": "",
+  "minutesPage": null,
       "passed": true,
       "friendly": true
     }
