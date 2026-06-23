@@ -339,6 +339,9 @@
       border-bottom: 1px solid #e0e0e0;
       width: 100%;
       text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .back-btn:hover { background: #f0f7f4 }
 
@@ -419,7 +422,7 @@
   <div class="workspace">
     <div class="list-panel" id="listPanel"></div>
     <div class="detail-panel mobile-hidden" id="detailPanel">
-      <button class="back-btn" id="backBtn">&#8592; All decisions</button>
+      <button class="back-btn" id="backBtn">← All decisions</button>
       <div id="detailBody">
         <div class="detail-empty">Select a decision to view details</div>
       </div>
