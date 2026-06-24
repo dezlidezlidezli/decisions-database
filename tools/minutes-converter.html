@@ -1238,6 +1238,13 @@ function parseMotionBlock(lines, fullBlockText, log) {
     if (endPreamble > afterPreamble) {
       preamble = text.substring(afterPreamble + 1, endPreamble).trim();
     }
+  } else if (preambleStart === -1 && motionMarker !== -1) {
+    // No explicit Preamble marker — text before the Motion/Action marker is the preamble
+    const candidate = text.substring(0, motionMarker).trim();
+    // Only use if it looks like prose (not just mover/seconder lines)
+    if (candidate.length > 50 && !/^Mover\s*:/im.test(candidate)) {
+      preamble = candidate;
+    }
   }
 
   // Remove content warning from preamble start
