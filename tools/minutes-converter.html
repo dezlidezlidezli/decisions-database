@@ -996,7 +996,7 @@ function parseMotions(pages, log) {
   for (const line of allLines) {
     const start = fullTextParts.join('\n').length + (fullTextParts.length ? 1 : 0);
     fullTextParts.push(line.text);
-    lineIndex.push({ pageNum: line.pageNum, text: line.text, isBold: line.isBold, paragraphBreakBefore: line.paragraphBreakBefore });
+    lineIndex.push({ pageNum: line.pageNum, text: line.text, isBold: line.isBold, paragraphBreakBefore: line.paragraphBreakBefore, y: line.y });
   }
   const fullText = fullTextParts.join('\n');
 
@@ -1032,7 +1032,7 @@ function parseMotions(pages, log) {
           break;
         }
       }
-      headings.push({ lineIdx: i, endLineIdx: j, pageNum: line.pageNum, text: headingText.trim() });
+      headings.push({ lineIdx: i, endLineIdx: j, pageNum: line.pageNum, text: headingText.trim(), headingY: line.y || 0 });
     }
     // Check for unnumbered motion heading: "Motion: Title" (e.g. Other Business)
     else if (!match && /^Motion\s*:\s*(.+)/i.test(line.text) && (line.isBold || true)) {
@@ -1092,6 +1092,7 @@ function parseMotions(pages, log) {
         mover: parsed.mover,
         seconder: parsed.seconder,
         minutesPage: heading.pageNum,
+        _headingY: heading.headingY || 0,
         type: 'Motion',
         status: parsed.status,
         amendments: parsed.amendments
@@ -1111,6 +1112,7 @@ function parseMotions(pages, log) {
           mover: section.mover || parsed.mover,
           seconder: section.seconder || parsed.seconder,
           minutesPage: heading.pageNum,
+        _headingY: heading.headingY || 0,
           type: 'Motion',
           status: section.status || parsed.status,
           amendments: section.amendments || (mi === 0 ? parsed.amendments : [])
@@ -1717,12 +1719,16 @@ async function openSourceModal(motionIdx) {
     return;
   }
 
-  // Render pages
+  // Render pages at higher scale, then scroll to heading position
+  const RENDER_SCALE = 1.8;
   pagesContainer.innerHTML = '';
+  let scrollTarget = null;
+
   for (let p = pageRange.start; p <= pageRange.end; p++) {
     try {
       const page = await state.pdfDoc.getPage(p);
-      const viewport = page.getViewport({ scale: 1.2 });
+      const viewport = page.getViewport({ scale: RENDER_SCALE });
+      const pageHeight = page.getViewport({ scale: 1 }).height;
 
       const wrapper = document.createElement('div');
       wrapper.className = 'source-page-wrapper';
@@ -1738,12 +1744,31 @@ async function openSourceModal(motionIdx) {
         canvasContext: canvas.getContext('2d'),
         viewport: viewport
       }).promise;
+
+      // Calculate scroll offset for the heading position on the first page
+      if (p === pageRange.start && motion._headingY) {
+        // PDF Y is from bottom of page; convert to pixels from top of canvas
+        const yFromTop = (pageHeight - motion._headingY) * RENDER_SCALE;
+        // Scroll to a bit above the heading for context
+        scrollTarget = Math.max(0, yFromTop - 60);
+      }
     } catch (err) {
       const errDiv = document.createElement('div');
       errDiv.style.cssText = 'padding:12px;color:var(--red);font-size:0.85rem;';
       errDiv.textContent = `Error rendering page ${p}: ${err.message}`;
       pagesContainer.appendChild(errDiv);
     }
+  }
+
+  // Auto-scroll modal content to the heading position
+  if (scrollTarget !== null) {
+    const modalContent = document.querySelector('.source-modal-content');
+    requestAnimationFrame(() => {
+      // Account for header + notes height
+      const headerH = modalContent.querySelector('.source-modal-header')?.offsetHeight || 0;
+      const notesH = modalContent.querySelector('.source-modal-notes')?.offsetHeight || 0;
+      modalContent.scrollTop = scrollTarget + headerH + notesH;
+    });
   }
 }
 
