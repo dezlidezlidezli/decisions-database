@@ -47,6 +47,7 @@ export function badge(text, cls) {
 export function statusClass(status) {
   if (status === 'Passed')    return 'badge-passed';
   if (status === 'Withdrawn') return 'badge-withdrawn';
+  if (status === 'Lapsed')    return 'badge-lapsed';
   return 'badge-failed';
 }
 

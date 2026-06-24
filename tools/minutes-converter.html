@@ -1005,24 +1005,17 @@ function fillEnBlocData(log) {
   const motions = state.motions;
   if (motions.length < 2) return;
 
-  // Group consecutive motions that share the same minutesPage (likely en bloc)
-  // Also look for motions where mover/seconder/status are missing
+  // Only share data between motions that belong to the same bloc group
   for (let i = 0; i < motions.length; i++) {
     const m = motions[i];
+    if (!m.bloc) continue; // only fill within confirmed blocs
     if (m.mover && m.seconder && m.status) continue;
 
-    // Look for nearby motions (within ±3 index positions) that have the data
-    // En bloc motions are typically adjacent in the minutes
-    let donor = null;
-    for (let j = Math.max(0, i - 5); j < Math.min(motions.length, i + 6); j++) {
-      if (j === i) continue;
-      const other = motions[j];
-      if (other.mover && other.seconder && other.status &&
-          Math.abs(other.minutesPage - m.minutesPage) <= 3) {
-        donor = other;
-        break;
-      }
-    }
+    // Find a sibling in the same bloc that has the data
+    const donor = motions.find(other =>
+      other !== m && other.bloc === m.bloc &&
+      other.mover && other.seconder && other.status
+    );
 
     if (donor) {
       const filled = [];
@@ -1030,7 +1023,7 @@ function fillEnBlocData(log) {
       if (!m.seconder) { m.seconder = donor.seconder; filled.push('seconder'); }
       if (!m.status) { m.status = donor.status; filled.push('status'); }
       if (filled.length) {
-        log.push({ cls: 'warn', msg: `Motion ${m.id}: filled ${filled.join(', ')} from nearby motion ${donor.id} (likely en bloc)` });
+        log.push({ cls: 'warn', msg: `Motion ${m.id}: filled ${filled.join(', ')} from bloc sibling ${donor.id}` });
       }
     }
   }
@@ -1159,14 +1152,17 @@ function parseMotionBlock(lines, fullBlockText, log) {
   if (seconderMatch) seconder = seconderMatch[1].trim();
 
   // Status
-  if (/motion\s+pass(?:es|ed)/i.test(text)) status = 'Passed';
+  if (/motion\s+(?:\d+\.\d+\s+)?pass(?:es|ed)/i.test(text)) status = 'Passed';
   else if (/motion\s+(?:\d+\.\d+\s+)?carri(?:es|ed)/i.test(text)) status = 'Passed';
-  else if (/motion\s+fail(?:s|ed)/i.test(text)) status = 'Failed';
+  else if (/blocced\s+motions?\s+[\d.,\s&]+\s*passed/i.test(text)) status = 'Passed';
+  else if (/motion\s+(?:\d+\.\d+\s+)?fail(?:s|ed)/i.test(text)) status = 'Failed';
   else if (/motion\s+(?:is\s+)?withdrawn/i.test(text)) status = 'Withdrawn';
-  // Also check for standalone "carried" on its own line (bold)
+  else if (/motion\s+lapse[sd]?/i.test(text)) status = 'Lapsed';
+  // Fallback: standalone "Passed.", "Carried.", "Failed." on its own line
   if (!status) {
-    const carriedLine = text.match(/^\*?\*?carri(?:es|ed)\*?\*?\s*\.?\s*$/im);
-    if (carriedLine) status = 'Passed';
+    if (/^\*?\*?Passed\*?\*?\s*\.?\s*$/m.test(text)) status = 'Passed';
+    else if (/^\*?\*?Carri(?:es|ed)\*?\*?\s*\.?\s*$/im.test(text)) status = 'Passed';
+    else if (/^\*?\*?Failed\*?\*?\s*\.?\s*$/im.test(text)) status = 'Failed';
   }
 
   // Amendments
@@ -1426,6 +1422,7 @@ function createMotionCard(motion, idx) {
           <option value="Passed" ${motion.status === 'Passed' ? 'selected' : ''}>Passed</option>
           <option value="Failed" ${motion.status === 'Failed' ? 'selected' : ''}>Failed</option>
           <option value="Withdrawn" ${motion.status === 'Withdrawn' ? 'selected' : ''}>Withdrawn</option>
+          <option value="Lapsed" ${motion.status === 'Lapsed' ? 'selected' : ''}>Lapsed</option>
         </select>
       </div>
       <div class="field"><label>Page</label><input type="number" value="${motion.minutesPage}" data-field="minutesPage"></div>
