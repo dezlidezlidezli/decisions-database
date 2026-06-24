@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANUSA SRC Minutes Converter</title>
+<style>
+  :root {
+    --green: #00663e;
+    --green-light: #e6f2ec;
+    --green-dark: #004d2e;
+    --yellow-warn: #fff3cd;
+    --yellow-border: #ffc107;
+    --red: #dc3545;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f5;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #868e96;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  h1 {
+    text-align: center;
+    color: var(--green);
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 36px;
+    position: relative;
+    flex-wrap: wrap;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    position: relative;
+    white-space: nowrap;
+  }
+
+  .step-item:not(:last-child)::after {
+    content: '';
+    width: 28px;
+    height: 2px;
+    background: var(--gray-300);
+    margin-left: 8px;
+  }
+
+  .step-item.active { color: var(--green); }
+  .step-item.done { color: var(--green-dark); }
+  .step-item:not(:last-child).active::after,
+  .step-item:not(:last-child).done::after { background: var(--green); }
+
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    background: var(--gray-200);
+    color: var(--gray-500);
+    flex-shrink: 0;
+  }
+
+  .step-item.active .step-num { background: var(--green); color: #fff; }
+  .step-item.done .step-num { background: var(--green-dark); color: #fff; }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.visible { display: block; }
+
+  /* Step 1: Upload */
+  .drop-zone {
+    border: 2px dashed var(--gray-400);
+    border-radius: var(--radius);
+    padding: 60px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #fff;
+  }
+
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+
+  .drop-zone .icon { font-size: 2.5rem; margin-bottom: 12px; color: var(--gray-500); }
+  .drop-zone p { color: var(--gray-600); margin-bottom: 8px; }
+  .drop-zone .hint { font-size: 0.8rem; color: var(--gray-500); }
+
+  .file-input { display: none; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 48px;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading p { color: var(--gray-600); }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .card h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
+    color: var(--green-dark);
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 8px;
+  }
+
+  /* Form fields */
+  .field { margin-bottom: 12px; }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(0,102,62,0.1);
+  }
+
+  .field textarea { resize: vertical; min-height: 60px; }
+
+  .field.warn input, .field.warn textarea {
+    background: var(--yellow-warn);
+    border-color: var(--yellow-border);
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--green);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--green-dark); }
+
+  .btn-secondary {
+    background: var(--gray-200);
+    color: var(--gray-700);
+  }
+  .btn-secondary:hover { background: var(--gray-300); }
+
+  .btn-danger {
+    background: #fff;
+    color: var(--red);
+    border: 1px solid var(--red);
+  }
+  .btn-danger:hover { background: #fde8ea; }
+
+  .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .actions-right { display: flex; gap: 8px; }
+
+  /* Motion card */
+  .motion-card {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .motion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--green-light);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .motion-header h4 {
+    font-size: 0.95rem;
+    color: var(--green-dark);
+  }
+
+  .motion-header .toggle {
+    font-size: 1.1rem;
+    color: var(--gray-500);
+    transition: transform 0.2s;
+  }
+
+  .motion-header .toggle.open { transform: rotate(180deg); }
+
+  .motion-body { padding: 20px; display: none; }
+  .motion-body.open { display: block; }
+
+  /* Amendments */
+  .amendment-block {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .amendment-block .amend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .amendment-block .amend-header span {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 20px;
+    background: var(--green-light);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--green-dark);
+  }
+
+  /* Export panel */
+  .export-result {
+    text-align: center;
+    padding: 36px;
+  }
+
+  .export-result .check {
+    width: 64px; height: 64px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    color: #fff;
+    font-size: 2rem;
+  }
+
+  .export-result h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .folder-path {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--gray-100);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    display: inline-block;
+    margin: 12px 0;
+    border: 1px solid var(--gray-300);
+  }
+
+  .preview-box {
+    background: var(--gray-800);
+    color: #e0e0e0;
+    padding: 16px;
+    border-radius: var(--radius);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    text-align: left;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 16px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .preview-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .preview-tab {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    background: var(--gray-200);
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .preview-tab.active {
+    background: var(--gray-800);
+    color: #fff;
+  }
+
+  /* Checkbox row */
+  .checkbox-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .checkbox-row label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+  }
+
+  .checkbox-row input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--green);
+  }
+
+  /* Parse log */
+  .parse-log {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--gray-700);
+  }
+
+  .parse-log .warn { color: #e67700; }
+  .parse-log .ok { color: var(--green); }
+  .parse-log .err { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>ANUSA SRC Minutes Converter</h1>
+  <p class="subtitle">Convert SRC minutes PDFs into structured data files for the decisions database</p>
+
+  <div class="steps">
+    <div class="step-item active" id="step-ind-1"><span class="step-num">1</span> Upload PDF</div>
+    <div class="step-item" id="step-ind-2"><span class="step-num">2</span> Parse</div>
+    <div class="step-item" id="step-ind-3"><span class="step-num">3</span> Review</div>
+    <div class="step-item" id="step-ind-4"><span class="step-num">4</span> Export</div>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div class="panel visible" id="panel-1">
+    <div class="drop-zone" id="drop-zone">
+      <div class="icon">&#128196;</div>
+      <p>Drag and drop an SRC minutes PDF here</p>
+      <p class="hint">or click to browse files</p>
+      <input type="file" accept="application/pdf" class="file-input" id="file-input">
+    </div>
+  </div>
+
+  <!-- Step 2: Parse -->
+  <div class="panel" id="panel-2">
+    <div class="loading" id="parse-loading">
+      <div class="spinner"></div>
+      <p id="parse-status">Extracting text from PDF...</p>
+    </div>
+    <div id="parse-done" style="display:none;">
+      <div class="card">
+        <h3>Parsing Complete</h3>
+        <p id="parse-summary"></p>
+        <div class="parse-log" id="parse-log"></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
+        <button class="btn btn-primary" onclick="goToStep(3)">Review &amp; Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Review -->
+  <div class="panel" id="panel-3">
+    <div class="card" id="metadata-card">
+      <h3>Meeting Metadata</h3>
+      <div class="field-row">
+        <div class="field"><label>Name</label><input type="text" id="meta-name"></div>
+        <div class="field"><label>Date</label><input type="date" id="meta-date"></div>
+      </div>
+      <div class="field"><label>Location</label><input type="text" id="meta-location"></div>
+      <div class="field-row">
+        <div class="field"><label>Duration</label><input type="text" id="meta-duration"></div>
+        <div class="field"><label>Minutes URL</label><input type="url" id="meta-url" placeholder="https://anusa.com.au/..."></div>
+      </div>
+    </div>
+
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <div id="motions-container"></div>
+
+    <button class="btn btn-secondary" onclick="addBlankMotion()" style="margin-bottom:16px;">+ Add Motion</button>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="goToStep(2)">Back to Parse</button>
+      <button class="btn btn-primary" onclick="doExport()">Export ZIP</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Export -->
+  <div class="panel" id="panel-4">
+    <div class="card">
+      <div class="export-result">
+        <div class="check">&#10003;</div>
+        <h3>Export Complete</h3>
+        <p>Place the files in:</p>
+        <div class="folder-path" id="folder-path"></div>
+        <div style="margin-top:20px;">
+          <div class="preview-tabs" id="preview-tabs"></div>
+          <div class="preview-box" id="preview-box"></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="goToStep(3)">Back to Review</button>
+      <button class="btn btn-primary" onclick="doExport()">Download Again</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+// ── State ──
+let state = {
+  meeting: { name: '', date: '', location: '', duration: '', minutesUrl: '' },
+  motions: [],
+  pageTexts: [], // raw text per page
+  generatedFiles: {} // filename -> content
+};
+
+window.state = state;
+
+// ── Step navigation ──
+let currentStep = 1;
+
+window.goToStep = function(n) {
+  currentStep = n;
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`panel-${i}`).classList.toggle('visible', i === n);
+    const ind = document.getElementById(`step-ind-${i}`);
+    ind.classList.remove('active', 'done');
+    if (i < n) ind.classList.add('done');
+    else if (i === n) ind.classList.add('active');
+  }
+  if (n === 3) renderReview();
+};
+
+// ── Step 1: File upload ──
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') handleFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+async function handleFile(file) {
+  goToStep(2);
+  document.getElementById('parse-loading').style.display = '';
+  document.getElementById('parse-done').style.display = 'none';
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const log = [];
+    log.push({ cls: 'ok', msg: `Loaded PDF: ${pdf.numPages} pages` });
+
+    updateStatus('Extracting text from pages...');
+    const pages = await extractPages(pdf);
+    state.pageTexts = pages;
+    log.push({ cls: 'ok', msg: `Extracted text from ${pages.length} pages` });
+
+    updateStatus('Parsing meeting metadata...');
+    parseMeetingMetadata(pages, log);
+
+    updateStatus('Parsing motions...');
+    parseMotions(pages, log);
+
+    log.push({ cls: 'ok', msg: `Done. ${state.motions.length} motions extracted.` });
+
+    document.getElementById('parse-loading').style.display = 'none';
+    document.getElementById('parse-done').style.display = '';
+    document.getElementById('parse-summary').textContent =
+      `Extracted ${state.motions.length} motions from "${state.meeting.name}" (${state.meeting.date})`;
+    renderLog(log);
+  } catch (err) {
+    document.getElementById('parse-status').textContent = 'Error: ' + err.message;
+    console.error(err);
+  }
+}
+
+function updateStatus(msg) {
+  document.getElementById('parse-status').textContent = msg;
+}
+
+function renderLog(log) {
+  const el = document.getElementById('parse-log');
+  el.innerHTML = log.map(l => `<div class="${l.cls}">${esc(l.msg)}</div>`).join('');
+}
+
+// ── PDF text extraction ──
+async function extractPages(pdf) {
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Group items into lines by y-position
+    const lines = groupIntoLines(content.items);
+    pages.push({ pageNum: i, lines, items: content.items });
+  }
+  return pages;
+}
+
+function groupIntoLines(items) {
+  if (!items.length) return [];
+  // Sort by y descending (PDF coords), then x ascending
+  const sorted = items.slice().sort((a, b) => {
+    const dy = b.transform[5] - a.transform[5];
+    if (Math.abs(dy) > 3) return dy;
+    return a.transform[4] - b.transform[4];
+  });
+
+  const lines = [];
+  let currentLine = { y: sorted[0].transform[5], items: [sorted[0]] };
+
+  for (let i = 1; i < sorted.length; i++) {
+    const item = sorted[i];
+    if (Math.abs(item.transform[5] - currentLine.y) < 3) {
+      currentLine.items.push(item);
+    } else {
+      currentLine.items.sort((a, b) => a.transform[4] - b.transform[4]);
+      lines.push(currentLine);
+      currentLine = { y: item.transform[5], items: [item] };
+    }
+  }
+  currentLine.items.sort((a, b) => a.transform[4] - b.transform[4]);
+  lines.push(currentLine);
+
+  return lines.map(l => ({
+    text: l.items.map(it => it.str).join('').trim(),
+    items: l.items,
+    isBold: l.items.some(it => it.fontName && /bold/i.test(it.fontName)),
+    y: l.y
+  }));
+}
+
+// ── Meeting metadata parsing ──
+function parseMeetingMetadata(pages, log) {
+  const allText = pages.map(p => p.lines.map(l => l.text).join('\n')).join('\n');
+  const firstPageText = pages[0].lines.map(l => l.text).join('\n');
+
+  // Name: "MINUTES – ANUSA STUDENT REPRESENTATIVE COUNCIL (SRC) 3 2026"
+  // or "MINUTES - ANUSA STUDENT REPRESENTATIVE COUNCIL (SRC) 3 2026"
+  const nameMatch = allText.match(/MINUTES\s*[–\-]\s*ANUSA\s+STUDENT\s+REPRESENTATIVE\s+COUNCIL\s*\(SRC\)\s*(\d+)\s+(\d{4})/i);
+  if (nameMatch) {
+    state.meeting.name = `SRC ${nameMatch[1]}, ${nameMatch[2]}`;
+    log.push({ cls: 'ok', msg: `Meeting name: ${state.meeting.name}` });
+  } else {
+    // Fallback: look for SRC number
+    const fallback = allText.match(/SRC\s+(\d+)[,\s]+(\d{4})/i);
+    if (fallback) {
+      state.meeting.name = `SRC ${fallback[1]}, ${fallback[2]}`;
+      log.push({ cls: 'warn', msg: `Meeting name (fallback): ${state.meeting.name}` });
+    } else {
+      log.push({ cls: 'err', msg: 'Could not parse meeting name' });
+    }
+  }
+
+  // Date: "Wednesday, 22nd April 2026" or similar
+  const dateMatch = allText.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+(\d{1,2})(?:st|nd|rd|th)?\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i);
+  if (dateMatch) {
+    const months = { january:1, february:2, march:3, april:4, may:5, june:6, july:7, august:8, september:9, october:10, november:11, december:12 };
+    const m = months[dateMatch[2].toLowerCase()];
+    const d = parseInt(dateMatch[1]);
+    const y = parseInt(dateMatch[3]);
+    state.meeting.date = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    log.push({ cls: 'ok', msg: `Date: ${state.meeting.date}` });
+  } else {
+    log.push({ cls: 'err', msg: 'Could not parse date' });
+  }
+
+  // Location & start time from line like "6:15pm, Graneek Room (Chifley Library) and Zoom"
+  // or "6:15 pm, Graneek Room..."
+  const timeLocMatch = allText.match(/(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM)),?\s+(.+)/m);
+  if (timeLocMatch) {
+    const startTime = normalizeTime(timeLocMatch[1]);
+    state.meeting.location = timeLocMatch[2].trim();
+    log.push({ cls: 'ok', msg: `Location: ${state.meeting.location}` });
+
+    // End time: "Meeting closed at 11:14 pm" or similar
+    const closeMatch = allText.match(/[Mm]eeting\s+closed\s+at\s+(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM))/i);
+    if (closeMatch) {
+      const endTime = normalizeTime(closeMatch[1]);
+      state.meeting.duration = `${startTime} – ${endTime}`;
+      log.push({ cls: 'ok', msg: `Duration: ${state.meeting.duration}` });
+    } else {
+      state.meeting.duration = startTime + ' – ?';
+      log.push({ cls: 'warn', msg: 'Could not find meeting close time' });
+    }
+  } else {
+    log.push({ cls: 'warn', msg: 'Could not parse location/time line' });
+  }
+}
+
+function normalizeTime(raw) {
+  // "6:15pm" -> "6:15 pm", "6.15 PM" -> "6:15 pm"
+  let t = raw.trim().replace('.', ':');
+  t = t.replace(/(\d)(am|pm)/i, '$1 $2');
+  t = t.replace(/\s*(AM|PM|am|pm)/, (m, p) => ' ' + p.toLowerCase());
+  return t;
+}
+
+// ── Motion parsing ──
+function parseMotions(pages, log) {
+  // Flatten all lines with page numbers
+  const allLines = [];
+  for (const page of pages) {
+    for (const line of page.lines) {
+      allLines.push({ ...line, pageNum: page.pageNum });
+    }
+  }
+
+  // Build full text for regex-based parsing
+  // We'll track page numbers by embedding markers
+  const fullTextParts = [];
+  const lineIndex = []; // maps position -> { pageNum, lineIdx }
+  for (const line of allLines) {
+    const start = fullTextParts.join('\n').length + (fullTextParts.length ? 1 : 0);
+    fullTextParts.push(line.text);
+    lineIndex.push({ pageNum: line.pageNum, text: line.text, isBold: line.isBold });
+  }
+  const fullText = fullTextParts.join('\n');
+
+  // Find motion headings: "Motion 7.X: Title" or "Motion 7.X – Title"
+  // They can be combined: "Motion 7.3: Title & Motion 7.4: Title"
+  const motionHeadingPattern = /^(Motion\s+\d+\.\d+\s*[:–\-–].+)$/gim;
+  const headings = [];
+
+  for (let i = 0; i < lineIndex.length; i++) {
+    const line = lineIndex[i];
+    // Check for motion heading
+    const match = line.text.match(/^Motion\s+(\d+\.\d+)\s*[:–\-–]\s*(.+)/i);
+    if (match && (line.isBold || isLikelyHeading(line.text, lineIndex, i))) {
+      headings.push({ lineIdx: i, pageNum: line.pageNum, text: line.text });
+    }
+  }
+
+  log.push({ cls: 'ok', msg: `Found ${headings.length} motion headings` });
+
+  // Process each heading
+  for (let h = 0; h < headings.length; h++) {
+    const heading = headings[h];
+    const nextHeadingIdx = h + 1 < headings.length ? headings[h + 1].lineIdx : lineIndex.length;
+    const blockLines = lineIndex.slice(heading.lineIdx, nextHeadingIdx);
+    const blockText = blockLines.map(l => l.text).join('\n');
+
+    // Check for combined motions: "Motion 7.3: Title & Motion 7.4: Title"
+    const combinedPattern = /Motion\s+(\d+\.\d+)\s*[:–\-–]\s*/gi;
+    const ids = [];
+    let cm;
+    while ((cm = combinedPattern.exec(heading.text)) !== null) {
+      ids.push(cm[1]);
+    }
+
+    // Extract titles for each motion in heading
+    const titleParts = heading.text.split(/\s*&\s*(?=Motion\s+\d)/i);
+    const titles = titleParts.map(p => {
+      const tm = p.match(/Motion\s+\d+\.\d+\s*[:–\-–]\s*(.*)/i);
+      return tm ? tm[1].trim() : '';
+    });
+
+    // Skip foreshadowed procedural motions
+    if (/foreshadowed\s+procedural\s+motion/i.test(heading.text) ||
+        /foreshadowed\s+procedural\s+motion/i.test(blockText.substring(0, 200))) {
+      log.push({ cls: 'warn', msg: `Skipped foreshadowed procedural: ${heading.text.substring(0, 60)}...` });
+      continue;
+    }
+
+    // Parse the block content
+    const parsed = parseMotionBlock(blockLines.slice(1), blockText, log); // slice(1) to skip heading
+
+    if (ids.length <= 1) {
+      // Single motion
+      const id = ids[0] || '?';
+      state.motions.push({
+        id,
+        title: titles[0] || '',
+        preamble: parsed.preamble,
+        fullText: parsed.fullText,
+        mover: parsed.mover,
+        seconder: parsed.seconder,
+        minutesPage: heading.pageNum,
+        type: 'Motion',
+        status: parsed.status,
+        amendments: parsed.amendments
+      });
+      log.push({ cls: 'ok', msg: `Motion ${id}: ${(titles[0] || '').substring(0, 50)}` });
+    } else {
+      // Combined/en bloc motions - try to split preamble/motion sections
+      const sections = splitCombinedMotionSections(blockLines.slice(1), ids);
+
+      for (let mi = 0; mi < ids.length; mi++) {
+        const section = sections[mi] || {};
+        state.motions.push({
+          id: ids[mi],
+          title: titles[mi] || titles[0] || '',
+          preamble: section.preamble || parsed.preamble,
+          fullText: section.fullText || (mi === 0 ? parsed.fullText : ''),
+          mover: section.mover || parsed.mover,
+          seconder: section.seconder || parsed.seconder,
+          minutesPage: heading.pageNum,
+          type: 'Motion',
+          status: section.status || parsed.status,
+          amendments: section.amendments || (mi === 0 ? parsed.amendments : [])
+        });
+        log.push({ cls: 'ok', msg: `Motion ${ids[mi]} (combined): ${(titles[mi] || '').substring(0, 50)}` });
+      }
+    }
+  }
+}
+
+function isLikelyHeading(text, lines, idx) {
+  // Heuristic: if the line starts with "Motion 7." it's probably a heading
+  return /^Motion\s+7\./i.test(text);
+}
+
+function parseMotionBlock(lines, fullBlockText, log) {
+  const text = lines.map(l => l.text).join('\n');
+
+  let preamble = '';
+  let motionText = '';
+  let mover = '';
+  let seconder = '';
+  let status = '';
+  let amendments = [];
+
+  // Find preamble section
+  // Preamble is between "Preamble" marker and "Motion" marker
+  // But some motions don't have a Preamble section
+  const preambleStart = text.search(/^Preamble\s*:?\s*$/im);
+  const motionMarker = findMotionMarker(text);
+
+  if (preambleStart !== -1 && motionMarker !== -1 && motionMarker > preambleStart) {
+    const afterPreamble = text.indexOf('\n', preambleStart);
+    preamble = text.substring(afterPreamble + 1, motionMarker).trim();
+  } else if (preambleStart !== -1) {
+    const afterPreamble = text.indexOf('\n', preambleStart);
+    // Preamble goes until Mover/Seconder or numbered items
+    const endPreamble = text.search(/^(?:Mover|1\.)/im);
+    if (endPreamble > afterPreamble) {
+      preamble = text.substring(afterPreamble + 1, endPreamble).trim();
+    }
+  }
+
+  // Remove content warning from preamble start
+  preamble = preamble.replace(/^Content\s+Warning\s*:?[^\n]*\n*/i, '').trim();
+
+  // Find motion text (numbered items)
+  if (motionMarker !== -1) {
+    const afterMotion = text.indexOf('\n', motionMarker);
+    const start = afterMotion !== -1 ? afterMotion + 1 : motionMarker;
+    // Motion text goes until Mover/Seconder line or discussion
+    const moverIdx = text.search(/^Mover\s*:/im);
+    const endIdx = moverIdx !== -1 ? moverIdx : text.length;
+    const rawMotion = text.substring(start, endIdx).trim();
+    motionText = extractNumberedItems(rawMotion);
+  } else {
+    // No explicit Motion marker - look for numbered items directly
+    const numberedStart = text.search(/^1\.\s/m);
+    if (numberedStart !== -1) {
+      const moverIdx = text.search(/^Mover\s*:/im);
+      const endIdx = moverIdx !== -1 ? moverIdx : text.length;
+      const rawMotion = text.substring(numberedStart, endIdx).trim();
+      motionText = extractNumberedItems(rawMotion);
+    }
+  }
+
+  // Mover and Seconder
+  const moverMatch = text.match(/^Mover\s*:\s*(.+)/im);
+  if (moverMatch) mover = moverMatch[1].trim();
+
+  const seconderMatch = text.match(/^Seconder\s*:\s*(.+)/im);
+  if (seconderMatch) seconder = seconderMatch[1].trim();
+
+  // Status
+  if (/motion\s+pass(?:es|ed)/i.test(text)) status = 'Passed';
+  else if (/motion\s+fail(?:s|ed)/i.test(text)) status = 'Failed';
+  else if (/motion\s+(?:is\s+)?withdrawn/i.test(text)) status = 'Withdrawn';
+
+  // Amendments
+  amendments = parseAmendments(text);
+
+  return { preamble, fullText: motionText, mover, seconder, status, amendments };
+}
+
+function findMotionMarker(text) {
+  // Find "Motion:" or "Motion" on its own line (not "Motion 7.X")
+  const match = text.match(/^Motion\s*:?\s*$/im);
+  if (match) return match.index;
+  return -1;
+}
+
+function extractNumberedItems(text) {
+  // Extract numbered items: 1. ... 2. ... with sub-items a. b. c.
+  const lines = text.split('\n');
+  const result = [];
+  let collecting = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Main numbered item
+    if (/^\d+\.\s/.test(trimmed)) {
+      result.push(trimmed);
+      collecting = true;
+    }
+    // Sub-item
+    else if (/^[a-z]\.\s/i.test(trimmed) && collecting) {
+      result.push(trimmed);
+    }
+    // Continuation of previous item (no number prefix, not a marker)
+    else if (collecting && !/^(?:Mover|Seconder|Discussion|Motion\s+\d|Foreshadowed|Amendment)/i.test(trimmed)) {
+      // Append to last line
+      if (result.length > 0) {
+        result[result.length - 1] += ' ' + trimmed;
+      }
+    } else {
+      // Stop collecting if we hit something unexpected
+      if (/^(?:Mover|Seconder|Discussion)/i.test(trimmed)) break;
+    }
+  }
+
+  return result.join('\n');
+}
+
+function parseAmendments(text) {
+  const amendments = [];
+  // Look for amendment patterns
+  const amendmentBlocks = text.split(/(?=^Amendment\s*(?:\d+\s*)?:?\s*$)/im);
+
+  for (let i = 1; i < amendmentBlocks.length; i++) {
+    const block = amendmentBlocks[i];
+    // Skip foreshadowed procedural
+    if (/foreshadowed\s+procedural/i.test(block)) continue;
+
+    const amend = {
+      text: '',
+      fullText: '',
+      mover: '',
+      seconder: '',
+      passed: false,
+      friendly: false
+    };
+
+    // Amendment mover/seconder
+    const amMover = block.match(/^Mover\s*:\s*(.+)/im);
+    if (amMover) amend.mover = amMover[1].trim();
+
+    const amSeconder = block.match(/^Seconder\s*:\s*(.+)/im);
+    if (amSeconder) amend.seconder = amSeconder[1].trim();
+
+    // Amendment text (numbered items or descriptive text)
+    const amMotionMarker = block.search(/^(?:Amendment|Motion)\s*:?\s*$/im);
+    let amText = '';
+    if (amMotionMarker !== -1) {
+      const afterMarker = block.indexOf('\n', amMotionMarker);
+      const moverIdx = block.search(/^Mover\s*:/im);
+      const endIdx = moverIdx !== -1 ? moverIdx : block.length;
+      if (afterMarker !== -1 && afterMarker < endIdx) {
+        amText = block.substring(afterMarker + 1, endIdx).trim();
+      }
+    }
+
+    // Try to get the numbered items
+    const numberedItems = extractNumberedItems(amText || block);
+    amend.fullText = numberedItems || amText;
+
+    // Generate a short summary
+    amend.text = amend.fullText.substring(0, 100) + (amend.fullText.length > 100 ? '...' : '');
+
+    // Passed?
+    if (/amendment\s+pass(?:es|ed)/i.test(block)) amend.passed = true;
+    else if (/amendment\s+fail(?:s|ed)/i.test(block)) amend.passed = false;
+    // Also check for "carries"
+    else if (/amendment\s+carries/i.test(block)) amend.passed = true;
+
+    // Friendly?
+    if (/friendly/i.test(block)) amend.friendly = true;
+
+    if (amend.fullText || amend.mover) {
+      amendments.push(amend);
+    }
+  }
+
+  return amendments;
+}
+
+function splitCombinedMotionSections(lines, ids) {
+  // Try to split a combined motion block into separate sections per motion ID
+  const text = lines.map(l => l.text).join('\n');
+  const sections = [];
+
+  // Look for separate Preamble/Motion sections for each ID
+  for (let i = 0; i < ids.length; i++) {
+    const parsed = parseMotionBlock(lines, text, []);
+    sections.push(parsed);
+  }
+
+  return sections;
+}
+
+// ── Step 3: Review rendering ──
+function renderReview() {
+  // Populate metadata
+  document.getElementById('meta-name').value = state.meeting.name;
+  document.getElementById('meta-date').value = state.meeting.date;
+  document.getElementById('meta-location').value = state.meeting.location;
+  document.getElementById('meta-duration').value = state.meeting.duration;
+  document.getElementById('meta-url').value = state.meeting.minutesUrl;
+
+  // Highlight empty metadata fields
+  ['meta-name', 'meta-date', 'meta-location', 'meta-duration'].forEach(id => {
+    const el = document.getElementById(id);
+    el.closest('.field').classList.toggle('warn', !el.value);
+  });
+
+  // Stats
+  document.getElementById('stats-bar').textContent = `${state.motions.length} motions extracted`;
+
+  // Render motion cards
+  const container = document.getElementById('motions-container');
+  container.innerHTML = '';
+
+  state.motions.forEach((motion, idx) => {
+    container.appendChild(createMotionCard(motion, idx));
+  });
+}
+
+function createMotionCard(motion, idx) {
+  const card = document.createElement('div');
+  card.className = 'motion-card';
+  card.dataset.idx = idx;
+
+  const header = document.createElement('div');
+  header.className = 'motion-header';
+  header.innerHTML = `
+    <h4>Motion ${esc(motion.id)}: ${esc(motion.title || '(untitled)')}</h4>
+    <span class="toggle">&#9660;</span>
+  `;
+  header.onclick = () => {
+    const body = card.querySelector('.motion-body');
+    body.classList.toggle('open');
+    header.querySelector('.toggle').classList.toggle('open');
+  };
+
+  const body = document.createElement('div');
+  body.className = 'motion-body';
+
+  const statusClass = !motion.status ? 'warn' : '';
+  const preambleClass = !motion.preamble ? 'warn' : '';
+  const fullTextClass = !motion.fullText ? 'warn' : '';
+  const moverClass = !motion.mover ? 'warn' : '';
+  const seconderClass = !motion.seconder ? 'warn' : '';
+
+  body.innerHTML = `
+    <div class="field-row-3">
+      <div class="field"><label>ID</label><input type="text" value="${esc(motion.id)}" data-field="id"></div>
+      <div class="field ${statusClass}"><label>Status</label>
+        <select data-field="status">
+          <option value="" ${!motion.status ? 'selected' : ''}>(unknown)</option>
+          <option value="Passed" ${motion.status === 'Passed' ? 'selected' : ''}>Passed</option>
+          <option value="Failed" ${motion.status === 'Failed' ? 'selected' : ''}>Failed</option>
+          <option value="Withdrawn" ${motion.status === 'Withdrawn' ? 'selected' : ''}>Withdrawn</option>
+        </select>
+      </div>
+      <div class="field"><label>Page</label><input type="number" value="${motion.minutesPage}" data-field="minutesPage"></div>
+    </div>
+    <div class="field"><label>Title</label><input type="text" value="${esc(motion.title)}" data-field="title"></div>
+    <div class="field ${preambleClass}"><label>Preamble</label><textarea rows="4" data-field="preamble">${esc(motion.preamble)}</textarea></div>
+    <div class="field ${fullTextClass}"><label>Motion Text</label><textarea rows="4" data-field="fullText">${esc(motion.fullText)}</textarea></div>
+    <div class="field-row">
+      <div class="field ${moverClass}"><label>Mover</label><input type="text" value="${esc(motion.mover)}" data-field="mover"></div>
+      <div class="field ${seconderClass}"><label>Seconder</label><input type="text" value="${esc(motion.seconder)}" data-field="seconder"></div>
+    </div>
+    <div class="field"><label>Type</label><input type="text" value="${esc(motion.type || 'Motion')}" data-field="type"></div>
+    <div style="margin-top:16px;">
+      <label style="font-size:0.8rem;font-weight:600;color:var(--gray-700);text-transform:uppercase;letter-spacing:0.03em;">Amendments (${motion.amendments.length})</label>
+      <div class="amendments-list" data-motion-idx="${idx}"></div>
+      <button class="btn btn-sm btn-secondary" style="margin-top:8px;" onclick="addAmendment(${idx})">+ Add Amendment</button>
+    </div>
+    <div style="margin-top:16px; text-align:right;">
+      <button class="btn btn-sm btn-danger" onclick="deleteMotion(${idx})">Delete Motion</button>
+    </div>
+  `;
+
+  card.appendChild(header);
+  card.appendChild(body);
+
+  // Render amendments
+  const amendList = body.querySelector('.amendments-list');
+  motion.amendments.forEach((amend, ai) => {
+    amendList.appendChild(createAmendmentBlock(amend, idx, ai));
+  });
+
+  // Bind change events
+  body.querySelectorAll('[data-field]').forEach(el => {
+    el.addEventListener('input', () => {
+      const field = el.dataset.field;
+      let val = el.value;
+      if (field === 'minutesPage') val = parseInt(val) || 0;
+      state.motions[idx][field] = val;
+    });
+  });
+
+  return card;
+}
+
+function createAmendmentBlock(amend, motionIdx, amendIdx) {
+  const block = document.createElement('div');
+  block.className = 'amendment-block';
+  block.innerHTML = `
+    <div class="amend-header">
+      <span>Amendment ${amendIdx + 1}</span>
+      <button class="btn btn-sm btn-danger" onclick="deleteAmendment(${motionIdx}, ${amendIdx})">Remove</button>
+    </div>
+    <div class="field"><label>Summary</label><input type="text" value="${esc(amend.text)}" data-afield="text"></div>
+    <div class="field"><label>Full Text</label><textarea rows="2" data-afield="fullText">${esc(amend.fullText)}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Mover</label><input type="text" value="${esc(amend.mover)}" data-afield="mover"></div>
+      <div class="field"><label>Seconder</label><input type="text" value="${esc(amend.seconder)}" data-afield="seconder"></div>
+    </div>
+    <div class="checkbox-row" style="margin-top:8px;">
+      <label><input type="checkbox" ${amend.passed ? 'checked' : ''} data-afield="passed"> Passed</label>
+      <label><input type="checkbox" ${amend.friendly ? 'checked' : ''} data-afield="friendly"> Friendly</label>
+    </div>
+  `;
+
+  block.querySelectorAll('[data-afield]').forEach(el => {
+    const evt = el.type === 'checkbox' ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      const field = el.dataset.afield;
+      const val = el.type === 'checkbox' ? el.checked : el.value;
+      state.motions[motionIdx].amendments[amendIdx][field] = val;
+    });
+  });
+
+  return block;
+}
+
+window.deleteMotion = function(idx) {
+  if (confirm(`Delete Motion ${state.motions[idx].id}?`)) {
+    state.motions.splice(idx, 1);
+    renderReview();
+  }
+};
+
+window.addBlankMotion = function() {
+  const lastId = state.motions.length > 0 ?
+    state.motions[state.motions.length - 1].id : '7.0';
+  const parts = lastId.split('.');
+  const nextNum = parseInt(parts[1] || 0) + 1;
+  const newId = `${parts[0]}.${nextNum}`;
+
+  state.motions.push({
+    id: newId,
+    title: '',
+    preamble: '',
+    fullText: '',
+    mover: '',
+    seconder: '',
+    minutesPage: 1,
+    type: 'Motion',
+    status: '',
+    amendments: []
+  });
+  renderReview();
+};
+
+window.addAmendment = function(motionIdx) {
+  state.motions[motionIdx].amendments.push({
+    text: '',
+    fullText: '',
+    mover: '',
+    seconder: '',
+    passed: false,
+    friendly: false
+  });
+  renderReview();
+};
+
+window.deleteAmendment = function(motionIdx, amendIdx) {
+  state.motions[motionIdx].amendments.splice(amendIdx, 1);
+  renderReview();
+};
+
+// ── Step 4: Export ──
+window.doExport = async function() {
+  // Sync metadata from form
+  state.meeting.name = document.getElementById('meta-name').value;
+  state.meeting.date = document.getElementById('meta-date').value;
+  state.meeting.location = document.getElementById('meta-location').value;
+  state.meeting.duration = document.getElementById('meta-duration').value;
+  state.meeting.minutesUrl = document.getElementById('meta-url').value;
+
+  const files = {};
+
+  // _meeting.js
+  files['_meeting.js'] = formatExport({
+    name: state.meeting.name,
+    date: state.meeting.date,
+    location: state.meeting.location,
+    duration: state.meeting.duration,
+    minutesUrl: state.meeting.minutesUrl
+  });
+
+  // Motion files
+  for (const motion of state.motions) {
+    const filename = `${motion.id}.js`;
+    files[filename] = formatExport({
+      id: motion.id,
+      title: motion.title,
+      preamble: motion.preamble,
+      fullText: motion.fullText,
+      mover: motion.mover,
+      seconder: motion.seconder,
+      minutesPage: motion.minutesPage,
+      type: motion.type,
+      status: motion.status,
+      amendments: motion.amendments.map(a => ({
+        text: a.text,
+        fullText: a.fullText,
+        mover: a.mover,
+        seconder: a.seconder,
+        passed: a.passed,
+        friendly: a.friendly
+      }))
+    });
+  }
+
+  state.generatedFiles = files;
+
+  // Generate ZIP
+  const JSZip = window.JSZip;
+  const zip = new JSZip();
+  for (const [name, content] of Object.entries(files)) {
+    zip.file(name, content);
+  }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const folderName = state.meeting.date || 'unknown-date';
+  const year = folderName.substring(0, 4);
+  saveAs(blob, `${folderName}-src-minutes.zip`);
+
+  // Show export panel
+  goToStep(4);
+  document.getElementById('folder-path').textContent = `data/decisions/${year}/${folderName}/`;
+
+  // File preview tabs
+  const tabsEl = document.getElementById('preview-tabs');
+  const previewEl = document.getElementById('preview-box');
+  tabsEl.innerHTML = '';
+
+  const fileNames = Object.keys(files).sort((a, b) => {
+    if (a === '_meeting.js') return -1;
+    if (b === '_meeting.js') return 1;
+    const na = parseFloat(a) || 0, nb = parseFloat(b) || 0;
+    return na - nb;
+  });
+
+  fileNames.forEach((name, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'preview-tab' + (i === 0 ? ' active' : '');
+    tab.textContent = name;
+    tab.onclick = () => {
+      tabsEl.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      previewEl.textContent = files[name];
+    };
+    tabsEl.appendChild(tab);
+  });
+
+  previewEl.textContent = files[fileNames[0]];
+};
+
+function formatExport(obj) {
+  return 'export default ' + formatValue(obj, 0) + ';\n';
+}
+
+function formatValue(val, indent) {
+  const pad = '  '.repeat(indent);
+  const padInner = '  '.repeat(indent + 1);
+
+  if (val === null || val === undefined) return 'null';
+  if (typeof val === 'boolean') return val ? 'true' : 'false';
+  if (typeof val === 'number') return String(val);
+
+  if (typeof val === 'string') {
+    // Escape for JS string
+    const escaped = val
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t');
+    return `"${escaped}"`;
+  }
+
+  if (Array.isArray(val)) {
+    if (val.length === 0) return '[]';
+    const items = val.map(v => padInner + formatValue(v, indent + 1));
+    return '[\n' + items.join(',\n') + '\n' + pad + ']';
+  }
+
+  if (typeof val === 'object') {
+    const entries = Object.entries(val);
+    if (entries.length === 0) return '{}';
+    const lines = entries.map(([k, v]) => {
+      return padInner + `"${k}": ${formatValue(v, indent + 1)}`;
+    });
+    return '{\n' + lines.join(',\n') + '\n' + pad + '}';
+  }
+
+  return String(val);
+}
+
+// ── Utility ──
+function esc(str) {
+  if (!str && str !== 0) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+
+<!-- External libs (non-module) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+</body>
+</html>
