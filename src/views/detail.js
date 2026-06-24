@@ -1,7 +1,8 @@
 import { meetingMeta, badge, statusClass, marked } from '../data.js';
 
-export function renderDetail(d, meetingDate, { onMeetingClick }) {
+export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, decisions = [] }) {
   const meta = meetingMeta[meetingDate] || {};
+  const blocSiblings = d.bloc ? decisions.filter(x => x.bloc === d.bloc && x.id !== d.id) : [];
 
   const preambleHtml     = d.preamble  ? marked.parse(d.preamble)  : '';
   const fullTextHtml     = d.fullText   ? marked.parse(d.fullText)   : '';
@@ -33,8 +34,11 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
       <div class="detail-badges">
         ${badge(d.type, 'badge-type')}
         ${badge(d.status, statusClass(d.status))}
-        ${d.bloc ? badge('En bloc', 'badge-bloc') : ''}
       </div>
+      ${blocSiblings.length ? `
+      <div class="bloc-notice">
+        Voted en bloc with ${blocSiblings.map(s => `<button class="bloc-link js-bloc-link" data-id="${s.id}">${s.id} ${s.title}</button>`).join(', ')}
+      </div>` : ''}
     </div>
 
     <div class="detail-meta-grid">
@@ -76,5 +80,11 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
     `;
 
   el.querySelector('.js-meeting-link')?.addEventListener('click', () => onMeetingClick(meetingDate));
+  el.querySelectorAll('.js-bloc-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sibling = decisions.find(x => x.id === btn.dataset.id);
+      if (sibling) onDecisionClick(sibling, meetingDate);
+    });
+  });
   return el;
 }

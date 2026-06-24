@@ -86,9 +86,13 @@ function _paint(view) {
         navigateTo({ type: 'decision', meetingDate, decision: d }),
     });
   } else {
+    const group = allGroups().find(g => g.meeting === view.meetingDate);
     node = renderDetail(view.decision, view.meetingDate, {
       onMeetingClick: (meetingDate) =>
         navigateTo({ type: 'meeting', meetingDate }),
+      onDecisionClick: (d, meetingDate) =>
+        navigateTo({ type: 'decision', meetingDate, decision: d }),
+      decisions: group?.decisions || [],
     });
   }
   detailBody.innerHTML = '';
