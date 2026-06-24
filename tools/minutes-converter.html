@@ -541,6 +541,14 @@
 
   <!-- Step 1: Upload -->
   <div class="panel visible" id="panel-1">
+    <div id="draft-banner" style="display:none;background:#e8f4fd;border:1px solid #90cdf4;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;">
+      <div style="font-weight:600;color:#2b6cb0;margin-bottom:4px;" id="draft-banner-title">Unsaved draft found</div>
+      <div style="font-size:0.85rem;color:#4a7ab5;margin-bottom:12px;" id="draft-banner-detail"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="background:#2b6cb0;color:#fff;" id="draft-resume">Resume editing</button>
+        <button class="btn btn-sm btn-secondary" id="draft-discard">Discard and start fresh</button>
+      </div>
+    </div>
     <div class="drop-zone" id="drop-zone">
       <div class="icon">&#128196;</div>
       <p>Drag and drop an SRC minutes PDF here</p>
@@ -642,6 +650,37 @@ let state = {
 
 window.state = state;
 
+const SAVE_KEY = 'anusa-minutes-converter-draft';
+
+function autoSave() {
+  try {
+    const data = {
+      meeting: state.meeting,
+      motions: state.motions.map(m => ({
+        id: m.id, title: m.title, preamble: m.preamble, fullText: m.fullText,
+        mover: m.mover, seconder: m.seconder, minutesPage: m.minutesPage,
+        type: m.type, status: m.status, amendments: m.amendments,
+        bloc: m.bloc, pageRange: m.pageRange, _headingY: m._headingY
+      })),
+      step: currentStep,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) { /* localStorage full or unavailable */ }
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function clearDraft() {
+  localStorage.removeItem(SAVE_KEY);
+}
+
 // ── Step navigation ──
 let currentStep = 1;
 
@@ -660,6 +699,32 @@ window.goToStep = function(n) {
 // ── Step 1: File upload ──
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
+
+// Check for saved draft on load
+{
+  const draft = loadDraft();
+  if (draft && draft.motions && draft.motions.length > 0) {
+    const banner = document.getElementById('draft-banner');
+    const saved = new Date(draft.savedAt);
+    const timeStr = saved.toLocaleString();
+    document.getElementById('draft-banner-title').textContent = `Draft found: "${draft.meeting.name || 'Unnamed meeting'}"`;
+    document.getElementById('draft-banner-detail').textContent = `${draft.motions.length} motions · Last saved ${timeStr}`;
+    banner.style.display = '';
+
+    document.getElementById('draft-resume').addEventListener('click', () => {
+      state.meeting = draft.meeting;
+      state.motions = draft.motions;
+      banner.style.display = 'none';
+      goToStep(3);
+      renderReview();
+    });
+
+    document.getElementById('draft-discard').addEventListener('click', () => {
+      clearDraft();
+      banner.style.display = 'none';
+    });
+  }
+}
 
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
@@ -715,6 +780,7 @@ async function handleFile(file) {
     }
 
     log.push({ cls: 'ok', msg: `Done. ${state.motions.length} motions extracted.` });
+    autoSave();
 
     document.getElementById('parse-loading').style.display = 'none';
     document.getElementById('parse-done').style.display = '';
@@ -1477,6 +1543,18 @@ function renderReview() {
   document.getElementById('meta-duration').value = state.meeting.duration;
   document.getElementById('meta-url').value = state.meeting.minutesUrl;
 
+  // Bind metadata fields to state + auto-save
+  ['meta-name', 'meta-date', 'meta-location', 'meta-duration', 'meta-url'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      state.meeting.name = document.getElementById('meta-name').value;
+      state.meeting.date = document.getElementById('meta-date').value;
+      state.meeting.location = document.getElementById('meta-location').value;
+      state.meeting.duration = document.getElementById('meta-duration').value;
+      state.meeting.minutesUrl = document.getElementById('meta-url').value;
+      autoSave();
+    });
+  });
+
   // Highlight empty metadata fields
   ['meta-name', 'meta-date', 'meta-location', 'meta-duration'].forEach(id => {
     const el = document.getElementById(id);
@@ -1594,6 +1672,7 @@ function createMotionCard(motion, idx) {
       let val = el.value;
       if (field === 'minutesPage') val = parseInt(val) || 0;
       state.motions[idx][field] = val;
+      autoSave();
     });
   });
 
@@ -1854,6 +1933,8 @@ window.doExport = async function() {
   const folderName = state.meeting.date || 'unknown-date';
   const year = folderName.substring(0, 4);
   saveAs(blob, `${folderName}-src-minutes.zip`);
+
+  clearDraft();
 
   // Show export panel
   goToStep(4);
