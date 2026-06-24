@@ -1193,25 +1193,31 @@ function fillEnBlocData(log) {
   const motions = state.motions;
   if (motions.length < 2) return;
 
-  // Only share data between motions that belong to the same bloc group
-  for (let i = 0; i < motions.length; i++) {
-    const m = motions[i];
-    if (!m.bloc) continue; // only fill within confirmed blocs
-    if (m.mover && m.seconder && m.status) continue;
+  // For each bloc group, find the best values and share across all members
+  const blocs = {};
+  for (const m of motions) {
+    if (!m.bloc) continue;
+    if (!blocs[m.bloc]) blocs[m.bloc] = [];
+    blocs[m.bloc].push(m);
+  }
 
-    // Find a sibling in the same bloc that has the data
-    const donor = motions.find(other =>
-      other !== m && other.bloc === m.bloc &&
-      other.mover && other.seconder && other.status
-    );
+  for (const [blocId, members] of Object.entries(blocs)) {
+    // Find the best mover/seconder/status from any member
+    const best = { mover: '', seconder: '', status: '' };
+    for (const m of members) {
+      if (m.mover && !best.mover) best.mover = m.mover;
+      if (m.seconder && !best.seconder) best.seconder = m.seconder;
+      if (m.status && !best.status) best.status = m.status;
+    }
 
-    if (donor) {
+    // Apply to all members
+    for (const m of members) {
       const filled = [];
-      if (!m.mover) { m.mover = donor.mover; filled.push('mover'); }
-      if (!m.seconder) { m.seconder = donor.seconder; filled.push('seconder'); }
-      if (!m.status) { m.status = donor.status; filled.push('status'); }
+      if (!m.mover && best.mover) { m.mover = best.mover; filled.push('mover'); }
+      if (!m.seconder && best.seconder) { m.seconder = best.seconder; filled.push('seconder'); }
+      if (!m.status && best.status) { m.status = best.status; filled.push('status'); }
       if (filled.length) {
-        log.push({ cls: 'warn', msg: `Motion ${m.id}: filled ${filled.join(', ')} from bloc sibling ${donor.id}` });
+        log.push({ cls: 'warn', msg: `Motion ${m.id}: filled ${filled.join(', ')} from bloc ${blocId}` });
       }
     }
   }
@@ -1672,6 +1678,22 @@ function createMotionCard(motion, idx) {
       let val = el.value;
       if (field === 'minutesPage') val = parseInt(val) || 0;
       state.motions[idx][field] = val;
+
+      // Bloc sync: mover/seconder/status shared across bloc siblings
+      const blocFields = ['mover', 'seconder', 'status'];
+      if (blocFields.includes(field) && state.motions[idx].bloc) {
+        const blocId = state.motions[idx].bloc;
+        state.motions.forEach((m, j) => {
+          if (j !== idx && m.bloc === blocId) {
+            m[field] = val;
+            // Update the DOM field in the sibling card if it's rendered
+            const siblingCard = document.querySelectorAll('.motion-card')[j];
+            const siblingEl = siblingCard?.querySelector(`[data-field="${field}"]`);
+            if (siblingEl) siblingEl.value = val;
+          }
+        });
+      }
+
       autoSave();
     });
   });
