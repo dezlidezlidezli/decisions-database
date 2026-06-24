@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC affirms the importance of democratic activist spaces within the student union.\n2. The ANUSA SRC opposes the abolition of the Environment Collective.",
   "mover": "Nick Reich",
   "seconder": "Sarah Strange",
-  "minutesPage": 12,
+  "minutesPage": 13,
   "type": "Motion",
   "status": "Failed",
   "amendments": []

@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The SRC calls on ANU to improve residential hall rights and experiences for students, especially with ANU's Residential Experience Division.\n2. The SRC is in favour of promoting transparency between residential halls and students' residential experiences, with all ANU students.\n3. The SRC affirms in holding ANU accountable regarding residential hall rights and experiences.\n4. The ANUSA SRC requests that the Executive takes a proactive stance on residential hall advocacy by actively engaging with residential students to improve student experiences.\n5. The ANUSA SRC calls on ANU to improve the wellbeing and mental health training received by Community Support Officers (CSO).\n6. The SRC calls on ANU to demand regular evaluations of CSO performance and student feedback, to ensure it meets the standard and needs of residents.\n7. The SRC calls on the ANU's Residential Experience Division to end the practice of ignoring feedback from student consultations and instead implementing it.",
   "mover": "Jessica Gunawan",
   "seconder": "Hayden O'Brien",
-  "minutesPage": null,
+  "minutesPage": 35,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
@@ -14,7 +14,6 @@ export default {
       "fullText": "",
       "mover": "Josh Shaw",
       "seconder": "",
-  "minutesPage": null,
       "passed": true,
       "friendly": true
     }

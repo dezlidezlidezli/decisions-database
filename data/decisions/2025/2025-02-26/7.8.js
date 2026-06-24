@@ -5,7 +5,7 @@ export default {
   "fullText": "1. As ANUSA Policy, the SRC opposes the Postering Policy.\n2. The SRC requests the Executive provide students with clear information about the policy and how they can contribute to efforts to reform it.",
   "mover": "Harrison Oates",
   "seconder": "Josh Shaw",
-  "minutesPage": null,
+  "minutesPage": 30,
   "type": "Motion",
   "status": "Passed",
   "amendments": []

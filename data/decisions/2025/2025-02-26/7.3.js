@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The SRC adopts the draft Student Code of Conduct as a policy of the Association.",
   "mover": "Will Burfoot",
   "seconder": "Vaishnavi Gangarapu",
-  "minutesPage": null,
+  "minutesPage": 18,
   "type": "Motion",
   "status": "Passed",
   "amendments": []

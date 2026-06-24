@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The SRC approves the list of clubs in this motion’s preamble for affiliation with ANUSA.",
   "mover": "Harrison Oates",
   "seconder": "Will Burfoot",
-  "minutesPage": null,
+  "minutesPage": 20,
   "type": "Motion",
   "status": "Passed",
   "amendments": []

@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC stands in solidarity with staff and students as they fight back against the course cuts at ANU.\n2. The ANUSA SRC condemns Vice-Chancellor Genevieve Bell and ANU university management for their attacks on staff and students.\n3. The ANUSA SRC calls for all ANU executives to reduce their salary to the median ANU salary of $82,000.\n4. The ANUSA SRC will endorse the student-staff rally on the 13th of March 2025 at 1pm.",
   "mover": "Ell Lappin",
   "seconder": "Lucy Chapman-Kelly",
-  "minutesPage": null,
+  "minutesPage": 33,
   "type": "Motion",
   "status": "Passed",
   "amendments": [
@@ -14,7 +14,6 @@ export default {
       "fullText": "",
       "mover": "Kiera Rosenberg",
       "seconder": "Josh Shaw",
-  "minutesPage": null,
       "passed": true,
       "friendly": false
     }
