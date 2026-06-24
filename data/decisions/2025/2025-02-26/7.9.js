@@ -5,7 +5,7 @@ export default {
   "fullText": "1. The ANUSA SRC calls for the ANU to maintain the hiring of new GPs\n2. The ANUSA SRC affirms the importance of the ANU Medical Centre and providing medical services to students\n3. The ANUSA SRC calls upon the ANUSA President to act on all levels possible to ensure high levels of student healthcare can be maintained\n4. The ANUSA SRC calls upon the ANU Medical Centre to continue prescribing ADHD medication",
   "mover": "Blair Doran",
   "seconder": "Seungbin Kang",
-  "minutesPage": 32,
+  "minutesPage": 31,
   "type": "Motion",
   "status": "Passed",
   "amendments": []
