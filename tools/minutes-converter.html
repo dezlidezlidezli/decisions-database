@@ -606,6 +606,9 @@ async function handleFile(file) {
     updateStatus('Parsing motions...');
     parseMotions(pages, log);
 
+    // Post-process: detect en bloc groupings from full text
+    detectBlocGroupings(pages, log);
+
     // Post-process: fill in missing mover/seconder/status for en bloc motions
     // When consecutive motions share the same page and some are missing data,
     // propagate from the one that has it
@@ -639,14 +642,85 @@ async function extractPages(pdf) {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    // Group items into lines by y-position
-    const lines = groupIntoLines(content.items);
+    // Get link annotations for this page
+    let linkAnnotations = [];
+    try {
+      const annotations = await page.getAnnotations();
+      linkAnnotations = annotations.filter(a => a.subtype === 'Link' && a.url);
+    } catch (e) { /* ignore annotation errors */ }
+    // Group items into lines by y-position, passing link annotations
+    const lines = groupIntoLines(content.items, linkAnnotations);
     pages.push({ pageNum: i, lines, items: content.items });
   }
   return pages;
 }
 
-function groupIntoLines(items) {
+function buildLineText(items, links) {
+  // Build line text from items, wrapping bold items in ** and linked items in [text](url)
+  let result = '';
+  let inBold = false;
+
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx];
+    const str = it.str;
+    if (!str) continue;
+
+    const isBold = it.fontName && /bold/i.test(it.fontName);
+    const itemX = it.transform[4];
+    const itemY = it.transform[5];
+    const itemWidth = it.width || (str.length * 6); // estimate if no width
+    const itemHeight = it.height || 12;
+
+    // Check if this item falls within a link annotation rectangle
+    let matchedLink = null;
+    if (str.length >= 3) {
+      for (const link of links) {
+        const [lx1, ly1, lx2, ly2] = link.rect;
+        // Item center should be within the link rect (with some tolerance)
+        const cx = itemX + itemWidth / 2;
+        const cy = itemY + itemHeight / 2;
+        if (cx >= lx1 - 2 && cx <= lx2 + 2 && cy >= ly1 - 2 && cy <= ly2 + 2) {
+          matchedLink = link;
+          break;
+        }
+      }
+    }
+
+    // Handle bold transitions
+    if (isBold && str.trim().length >= 3) {
+      if (!inBold) {
+        result += '**';
+        inBold = true;
+      }
+    } else if (inBold) {
+      result += '**';
+      inBold = false;
+    }
+
+    // Wrap in link if matched
+    if (matchedLink && str.trim().length >= 3) {
+      // Close bold before link if needed, re-open after
+      if (inBold) {
+        result += '**';
+        inBold = false;
+        result += `[**${str}**](${matchedLink.url})`;
+      } else {
+        result += `[${str}](${matchedLink.url})`;
+      }
+    } else {
+      result += str;
+    }
+  }
+
+  // Close any remaining bold
+  if (inBold) {
+    result += '**';
+  }
+
+  return result.trim();
+}
+
+function groupIntoLines(items, linkAnnotations) {
   if (!items.length) return [];
   // Sort by y descending (PDF coords), then x ascending
   const sorted = items.slice().sort((a, b) => {
@@ -678,15 +752,47 @@ function groupIntoLines(items) {
     gaps.push(Math.abs(lines[i - 1].y - lines[i].y));
   }
   const medianGap = gaps.length ? gaps.slice().sort((a, b) => a - b)[Math.floor(gaps.length / 2)] : 14;
-  const paraThreshold = medianGap * 1.6;
 
-  return lines.map((l, i) => ({
-    text: l.items.map(it => it.str).join('').trim(),
-    items: l.items,
-    isBold: l.items.some(it => it.fontName && /bold/i.test(it.fontName)),
-    y: l.y,
-    paragraphBreakBefore: i > 0 && Math.abs(lines[i - 1].y - l.y) > paraThreshold
+  // Hybrid paragraph detection: requires BOTH a Y-gap AND a semantic cue
+  const hybridParaThreshold = medianGap * 1.4;
+
+  // Build a lookup for link annotations by position
+  // PDF annotation rects are [x1, y1, x2, y2] in PDF coordinates
+  const links = (linkAnnotations || []).map(a => ({
+    rect: a.rect, // [x1, y1, x2, y2]
+    url: a.url
   }));
+
+  return lines.map((l, i) => {
+    // Build line text with bold and link markdown
+    const lineText = buildLineText(l.items, links);
+    let paraBreak = false;
+
+    if (i > 0) {
+      const yGap = Math.abs(lines[i - 1].y - l.y);
+      const hasYGap = yGap > hybridParaThreshold;
+
+      if (hasYGap) {
+        // Check semantic cues (use plain text for detection, not markdown-wrapped)
+        const prevPlain = lines[i - 1].items.map(it => it.str).join('').trim();
+        const plainText = l.items.map(it => it.str).join('').trim();
+        const prevEndsWithPunctuation = /[.?!:;"')]$/.test(prevPlain);
+        const nextStartsWithCapital = /^[A-Z]/.test(plainText.trimStart());
+        const nextStartsWithNumberedItem = /^(?:\d+\.\s|[a-z]\.\s)/i.test(plainText.trimStart());
+        const nextIsEmpty = !plainText;
+
+        paraBreak = prevEndsWithPunctuation || nextStartsWithCapital || nextStartsWithNumberedItem || nextIsEmpty;
+      }
+    }
+
+    return {
+      text: lineText,
+      items: l.items,
+      isBold: l.items.some(it => it.fontName && /bold/i.test(it.fontName)),
+      y: l.y,
+      paragraphBreakBefore: paraBreak
+    };
+  });
 }
 
 // ── Meeting metadata parsing ──
@@ -899,6 +1005,42 @@ function fillEnBlocData(log) {
   }
 }
 
+function detectBlocGroupings(pages, log) {
+  // Scan full text for mentions of "bloc" and associate nearby motion numbers
+  const fullText = pages.map(p => p.lines.map(l => l.text).join('\n')).join('\n');
+  const lines = fullText.split('\n');
+
+  for (const line of lines) {
+    if (!/\bbloc\b/i.test(line)) continue;
+
+    // Extract all motion numbers (like 7.3, 7.4, 7.5) mentioned in this line
+    const motionNumPattern = /(\d+\.\d+)/g;
+    const nums = [];
+    let m;
+    while ((m = motionNumPattern.exec(line)) !== null) {
+      nums.push(m[1]);
+    }
+
+    if (nums.length < 2) continue; // Need at least 2 motions for a bloc
+
+    // Build bloc ID
+    const blocId = 'bloc-' + nums.join('-');
+
+    // Tag each matching motion in state
+    let tagged = 0;
+    for (const motion of state.motions) {
+      if (nums.includes(motion.id)) {
+        motion.bloc = blocId;
+        tagged++;
+      }
+    }
+
+    if (tagged > 0) {
+      log.push({ cls: 'ok', msg: `En bloc detected: ${blocId} (${tagged} motions tagged)` });
+    }
+  }
+}
+
 function isLikelyHeading(text, lines, idx) {
   // Heuristic: if the line starts with "Motion 7." it's probably a heading
   return /^Motion\s+7\./i.test(text);
@@ -1004,27 +1146,36 @@ function findMotionMarker(text) {
 }
 
 function extractNumberedItems(text) {
-  // Extract numbered items: 1. ... 2. ... with sub-items a. b. c.
+  // Extract numbered items: 1. ... 2. ... with sub-items a. b. c. and sub-sub i. ii.
+  // Outputs properly indented markdown for nested lists
   const lines = text.split('\n');
   const result = [];
   let collecting = false;
+  let currentLevel = 0; // 0 = main (1.), 1 = sub (a.), 2 = sub-sub (i.)
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    // Main numbered item
+    // Main numbered item: 1. 2. 3. etc.
     if (/^\d+\.\s/.test(trimmed)) {
       result.push(trimmed);
       collecting = true;
+      currentLevel = 0;
     }
-    // Sub-item
+    // Sub-item: a. b. c. etc.
     else if (/^[a-z]\.\s/i.test(trimmed) && collecting) {
-      result.push(trimmed);
+      result.push('   ' + trimmed);
+      currentLevel = 1;
+    }
+    // Sub-sub-item: i. ii. iii. iv. etc. (roman numerals)
+    else if (/^(?:i{1,3}|iv|vi{0,3}|ix|x)\.\s/i.test(trimmed) && collecting && currentLevel >= 1) {
+      result.push('      ' + trimmed);
+      currentLevel = 2;
     }
     // Continuation of previous item (no number prefix, not a marker)
     else if (collecting && !/^(?:Mover|Seconder|Discussion|Motion\s+\d|Action\s*:|Foreshadowed|Amendment)/i.test(trimmed)) {
-      // Append to last line
+      // Append to last line as continuation
       if (result.length > 0) {
         result[result.length - 1] += ' ' + trimmed;
       }
@@ -1160,11 +1311,26 @@ function renderReview() {
   });
 
   // Stats
-  document.getElementById('stats-bar').textContent = `${state.motions.length} motions extracted`;
+  const statsBar = document.getElementById('stats-bar');
+  statsBar.textContent = `${state.motions.length} motions extracted`;
+
+  // Count motions with incomplete data
+  const requiredFields = ['mover', 'seconder', 'status', 'preamble', 'fullText'];
+  const incompleteCount = state.motions.filter(m =>
+    requiredFields.some(f => !m[f])
+  ).length;
 
   // Render motion cards
   const container = document.getElementById('motions-container');
   container.innerHTML = '';
+
+  // Add warning banner if there are incomplete motions
+  if (incompleteCount > 0) {
+    const warning = document.createElement('div');
+    warning.style.cssText = 'background:var(--yellow-warn);border:1px solid var(--yellow-border);border-radius:var(--radius);padding:12px 20px;margin-bottom:16px;font-size:0.9rem;font-weight:600;color:#856404;';
+    warning.textContent = `⚠ ${incompleteCount} motion${incompleteCount === 1 ? ' has' : 's have'} incomplete data`;
+    container.appendChild(warning);
+  }
 
   state.motions.forEach((motion, idx) => {
     container.appendChild(createMotionCard(motion, idx));
@@ -1176,10 +1342,16 @@ function createMotionCard(motion, idx) {
   card.className = 'motion-card';
   card.dataset.idx = idx;
 
+  const requiredMotionFields = ['mover', 'seconder', 'status', 'preamble', 'fullText'];
+  const missingFields = requiredMotionFields.filter(f => !motion[f]);
+  const hasWarning = missingFields.length > 0;
+  const blocTag = motion.bloc ? `<span style="display:inline-block;background:#e0e7ff;color:#3730a3;font-size:0.72rem;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:8px;">${esc(motion.bloc)}</span>` : '';
+  const warningIcon = hasWarning ? `<span style="color:var(--red);margin-left:8px;font-size:0.85rem;" title="Missing: ${missingFields.join(', ')}">⚠</span>` : '';
+
   const header = document.createElement('div');
   header.className = 'motion-header';
   header.innerHTML = `
-    <h4>Motion ${esc(motion.id)}: ${esc(motion.title || '(untitled)')}</h4>
+    <h4>Motion ${esc(motion.id)}: ${esc(motion.title || '(untitled)')}${warningIcon}${blocTag}</h4>
     <span class="toggle">&#9660;</span>
   `;
   header.onclick = () => {
@@ -1218,6 +1390,7 @@ function createMotionCard(motion, idx) {
       <div class="field ${seconderClass}"><label>Seconder</label><input type="text" value="${esc(motion.seconder)}" data-field="seconder"></div>
     </div>
     <div class="field"><label>Type</label><input type="text" value="${esc(motion.type || 'Motion')}" data-field="type"></div>
+    ${motion.bloc ? `<div class="field"><label>Bloc</label><input type="text" value="${esc(motion.bloc)}" readonly style="background:var(--gray-100);color:var(--gray-600);cursor:not-allowed;"></div>` : ''}
     <div style="margin-top:16px;">
       <label style="font-size:0.8rem;font-weight:600;color:var(--gray-700);text-transform:uppercase;letter-spacing:0.03em;">Amendments (${motion.amendments.length})</label>
       <div class="amendments-list" data-motion-idx="${idx}"></div>
@@ -1351,7 +1524,7 @@ window.doExport = async function() {
   // Motion files
   for (const motion of state.motions) {
     const filename = `${motion.id}.js`;
-    files[filename] = formatExport({
+    const motionData = {
       id: motion.id,
       title: motion.title,
       preamble: motion.preamble,
@@ -1369,7 +1542,12 @@ window.doExport = async function() {
         passed: a.passed,
         friendly: a.friendly
       }))
-    });
+    };
+    // Include bloc field only when it exists
+    if (motion.bloc) {
+      motionData.bloc = motion.bloc;
+    }
+    files[filename] = formatExport(motionData);
   }
 
   state.generatedFiles = files;
