@@ -606,6 +606,11 @@ async function handleFile(file) {
     updateStatus('Parsing motions...');
     parseMotions(pages, log);
 
+    // Post-process: fill in missing mover/seconder/status for en bloc motions
+    // When consecutive motions share the same page and some are missing data,
+    // propagate from the one that has it
+    fillEnBlocData(log);
+
     log.push({ cls: 'ok', msg: `Done. ${state.motions.length} motions extracted.` });
 
     document.getElementById('parse-loading').style.display = 'none';
@@ -666,11 +671,21 @@ function groupIntoLines(items) {
   currentLine.items.sort((a, b) => a.transform[4] - b.transform[4]);
   lines.push(currentLine);
 
-  return lines.map(l => ({
+  // Detect paragraph gaps by comparing Y distances between consecutive lines
+  // Normal line spacing is ~12-16pt; paragraph gaps are typically 1.5x+ that
+  const gaps = [];
+  for (let i = 1; i < lines.length; i++) {
+    gaps.push(Math.abs(lines[i - 1].y - lines[i].y));
+  }
+  const medianGap = gaps.length ? gaps.slice().sort((a, b) => a - b)[Math.floor(gaps.length / 2)] : 14;
+  const paraThreshold = medianGap * 1.6;
+
+  return lines.map((l, i) => ({
     text: l.items.map(it => it.str).join('').trim(),
     items: l.items,
     isBold: l.items.some(it => it.fontName && /bold/i.test(it.fontName)),
-    y: l.y
+    y: l.y,
+    paragraphBreakBefore: i > 0 && Math.abs(lines[i - 1].y - l.y) > paraThreshold
   }));
 }
 
@@ -757,7 +772,7 @@ function parseMotions(pages, log) {
   for (const line of allLines) {
     const start = fullTextParts.join('\n').length + (fullTextParts.length ? 1 : 0);
     fullTextParts.push(line.text);
-    lineIndex.push({ pageNum: line.pageNum, text: line.text, isBold: line.isBold });
+    lineIndex.push({ pageNum: line.pageNum, text: line.text, isBold: line.isBold, paragraphBreakBefore: line.paragraphBreakBefore });
   }
   const fullText = fullTextParts.join('\n');
 
@@ -849,13 +864,68 @@ function parseMotions(pages, log) {
   }
 }
 
+function fillEnBlocData(log) {
+  const motions = state.motions;
+  if (motions.length < 2) return;
+
+  // Group consecutive motions that share the same minutesPage (likely en bloc)
+  // Also look for motions where mover/seconder/status are missing
+  for (let i = 0; i < motions.length; i++) {
+    const m = motions[i];
+    if (m.mover && m.seconder && m.status) continue;
+
+    // Look for nearby motions (within ±3 index positions) that have the data
+    // En bloc motions are typically adjacent in the minutes
+    let donor = null;
+    for (let j = Math.max(0, i - 5); j < Math.min(motions.length, i + 6); j++) {
+      if (j === i) continue;
+      const other = motions[j];
+      if (other.mover && other.seconder && other.status &&
+          Math.abs(other.minutesPage - m.minutesPage) <= 3) {
+        donor = other;
+        break;
+      }
+    }
+
+    if (donor) {
+      const filled = [];
+      if (!m.mover) { m.mover = donor.mover; filled.push('mover'); }
+      if (!m.seconder) { m.seconder = donor.seconder; filled.push('seconder'); }
+      if (!m.status) { m.status = donor.status; filled.push('status'); }
+      if (filled.length) {
+        log.push({ cls: 'warn', msg: `Motion ${m.id}: filled ${filled.join(', ')} from nearby motion ${donor.id} (likely en bloc)` });
+      }
+    }
+  }
+}
+
 function isLikelyHeading(text, lines, idx) {
   // Heuristic: if the line starts with "Motion 7." it's probably a heading
   return /^Motion\s+7\./i.test(text);
 }
 
+function joinWithParagraphs(lines) {
+  return lines.map((l, i) => (l.paragraphBreakBefore ? '\n' : '') + l.text).join('\n');
+}
+
+function reflowParagraphs(text) {
+  // Collapse single newlines (PDF line wraps) into spaces,
+  // but preserve double newlines (real paragraph breaks).
+  // Also preserve lines starting with numbered items (1. 2. a. b.)
+  return text.split('\n\n').map(para =>
+    para.split('\n').reduce((acc, line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return acc;
+      if (/^\d+\.\s/.test(trimmed) || /^[a-z]\.\s/i.test(trimmed)) {
+        return acc + (acc ? '\n' : '') + trimmed;
+      }
+      return acc + (acc ? ' ' : '') + trimmed;
+    }, '')
+  ).join('\n\n');
+}
+
 function parseMotionBlock(lines, fullBlockText, log) {
-  const text = lines.map(l => l.text).join('\n');
+  const text = joinWithParagraphs(lines);
 
   let preamble = '';
   let motionText = '';
@@ -867,7 +937,7 @@ function parseMotionBlock(lines, fullBlockText, log) {
   // Find preamble section
   // Preamble is between "Preamble" marker and "Motion" marker
   // But some motions don't have a Preamble section
-  const preambleStart = text.search(/^Preamble\s*:?\s*$/im);
+  const preambleStart = text.search(/^(?:Preamble|Background)\s*:?\s*$/im);
   const motionMarker = findMotionMarker(text);
 
   if (preambleStart !== -1 && motionMarker !== -1 && motionMarker > preambleStart) {
@@ -884,6 +954,9 @@ function parseMotionBlock(lines, fullBlockText, log) {
 
   // Remove content warning from preamble start
   preamble = preamble.replace(/^Content\s+Warning\s*:?[^\n]*\n*/i, '').trim();
+
+  // Reflow: collapse PDF line wraps into spaces, preserve paragraph breaks
+  preamble = reflowParagraphs(preamble);
 
   // Find motion text (numbered items)
   if (motionMarker !== -1) {
@@ -924,8 +997,8 @@ function parseMotionBlock(lines, fullBlockText, log) {
 }
 
 function findMotionMarker(text) {
-  // Find "Motion:" or "Motion" on its own line (not "Motion 7.X")
-  const match = text.match(/^Motion\s*:?\s*$/im);
+  // Find "Motion:", "Motion", "Action:", or "Action" on its own line (not "Motion 7.X")
+  const match = text.match(/^(?:Motion|Action)\s*:?\s*$/im);
   if (match) return match.index;
   return -1;
 }
@@ -950,7 +1023,7 @@ function extractNumberedItems(text) {
       result.push(trimmed);
     }
     // Continuation of previous item (no number prefix, not a marker)
-    else if (collecting && !/^(?:Mover|Seconder|Discussion|Motion\s+\d|Foreshadowed|Amendment)/i.test(trimmed)) {
+    else if (collecting && !/^(?:Mover|Seconder|Discussion|Motion\s+\d|Action\s*:|Foreshadowed|Amendment)/i.test(trimmed)) {
       // Append to last line
       if (result.length > 0) {
         result[result.length - 1] += ' ' + trimmed;
@@ -1027,14 +1100,45 @@ function parseAmendments(text) {
 }
 
 function splitCombinedMotionSections(lines, ids) {
-  // Try to split a combined motion block into separate sections per motion ID
-  const text = lines.map(l => l.text).join('\n');
+  // Combined motions (en bloc) may have multiple Preamble/Motion sections
+  // Split by looking for repeated Preamble/Background markers
+  const text = joinWithParagraphs(lines);
   const sections = [];
 
-  // Look for separate Preamble/Motion sections for each ID
-  for (let i = 0; i < ids.length; i++) {
+  // Find all preamble starts
+  const preamblePattern = /^(?:Preamble|Background)\s*:?\s*$/gim;
+  const preamblePositions = [];
+  let pm;
+  while ((pm = preamblePattern.exec(text)) !== null) {
+    preamblePositions.push(pm.index);
+  }
+
+  // Find all motion/action markers
+  const motionPattern = /^(?:Motion|Action)\s*:?\s*$/gim;
+  const motionPositions = [];
+  let mm;
+  while ((mm = motionPattern.exec(text)) !== null) {
+    motionPositions.push(mm.index);
+  }
+
+  if (preamblePositions.length >= ids.length) {
+    // Each motion has its own preamble section — split by preamble positions
+    for (let i = 0; i < ids.length; i++) {
+      const start = preamblePositions[i];
+      const end = i + 1 < preamblePositions.length ? preamblePositions[i + 1] : text.length;
+      const sectionText = text.substring(start, end);
+      const sectionLines = lines.filter(l => {
+        const linePos = text.indexOf(l.text);
+        return linePos >= start && linePos < end;
+      });
+      sections.push(parseMotionBlock(sectionLines, sectionText, []));
+    }
+  } else {
+    // Can't split cleanly — parse whole block and share it
     const parsed = parseMotionBlock(lines, text, []);
-    sections.push(parsed);
+    for (let i = 0; i < ids.length; i++) {
+      sections.push(parsed);
+    }
   }
 
   return sections;
