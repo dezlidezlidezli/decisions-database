@@ -912,7 +912,27 @@ function parseMotions(pages, log) {
     // Check for numbered motion heading: "Motion X.Y: Title"
     const match = line.text.match(/^Motion\s+(\d+\.\d+)\s*[:–\-–]\s*(.+)/i);
     if (match && (line.isBold || isLikelyHeading(line.text, lineIndex, i))) {
-      headings.push({ lineIdx: i, pageNum: line.pageNum, text: line.text });
+      // Merge continuation lines: the heading may wrap across multiple lines.
+      // Continue merging if next line is bold OR is a short non-section line
+      // that looks like a title continuation (e.g. "Age", "& Motion 7.4: ...")
+      let headingText = line.text;
+      let j = i + 1;
+      while (j < lineIndex.length) {
+        const next = lineIndex[j];
+        const isSectionStart = /^(?:Preamble|Background|Action|Mover|Seconder|Foreshadowed|Content\s+Warning)/i.test(next.text.trim());
+        if (isSectionStart) break;
+        // Bold continuation or combined motion continuation ("& Motion 7.4: ...")
+        const isCombinedContinuation = /^[&]?\s*(?:Motion\s+\d|&)/i.test(next.text.trim());
+        const isShortContinuation = next.text.trim().length < 40 && !next.paragraphBreakBefore && !/^\d+\.\s/.test(next.text.trim());
+        const containsMotionRef = /Motion\s+\d+\.\d+/i.test(next.text) || /&\s*Motion/i.test(headingText + ' ' + next.text);
+        if (next.isBold || isCombinedContinuation || isShortContinuation || containsMotionRef) {
+          headingText += ' ' + next.text.trim();
+          j++;
+        } else {
+          break;
+        }
+      }
+      headings.push({ lineIdx: i, endLineIdx: j, pageNum: line.pageNum, text: headingText.trim() });
     }
     // Check for unnumbered motion heading: "Motion: Title" (e.g. Other Business)
     else if (!match && /^Motion\s*:\s*(.+)/i.test(line.text) && (line.isBold || true)) {
@@ -920,9 +940,8 @@ function parseMotions(pages, log) {
       if (obMatch) {
         otherBusinessCounter++;
         const obId = `OB.${otherBusinessCounter}`;
-        // Rewrite the line text to include the generated ID for downstream parsing
         const syntheticText = `Motion ${obId}: ${obMatch[1]}`;
-        headings.push({ lineIdx: i, pageNum: line.pageNum, text: syntheticText, originalText: line.text });
+        headings.push({ lineIdx: i, endLineIdx: i + 1, pageNum: line.pageNum, text: syntheticText, originalText: line.text });
       }
     }
   }
@@ -932,8 +951,9 @@ function parseMotions(pages, log) {
   // Process each heading
   for (let h = 0; h < headings.length; h++) {
     const heading = headings[h];
+    const startIdx = heading.endLineIdx || (heading.lineIdx + 1);
     const nextHeadingIdx = h + 1 < headings.length ? headings[h + 1].lineIdx : lineIndex.length;
-    const blockLines = lineIndex.slice(heading.lineIdx, nextHeadingIdx);
+    const blockLines = lineIndex.slice(startIdx, nextHeadingIdx);
     const blockText = blockLines.map(l => l.text).join('\n');
 
     // Check for combined motions: "Motion 7.3: Title & Motion 7.4: Title"
@@ -959,7 +979,7 @@ function parseMotions(pages, log) {
     }
 
     // Parse the block content
-    const parsed = parseMotionBlock(blockLines.slice(1), blockText, log); // slice(1) to skip heading
+    const parsed = parseMotionBlock(blockLines, blockText, log);
 
     if (ids.length <= 1) {
       // Single motion
