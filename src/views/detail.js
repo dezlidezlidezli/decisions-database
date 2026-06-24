@@ -33,6 +33,7 @@ export function renderDetail(d, meetingDate, { onMeetingClick }) {
       <div class="detail-badges">
         ${badge(d.type, 'badge-type')}
         ${badge(d.status, statusClass(d.status))}
+        ${d.bloc ? badge('En bloc', 'badge-bloc') : ''}
       </div>
     </div>
 

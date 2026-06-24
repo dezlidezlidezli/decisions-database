@@ -151,6 +151,7 @@ function renderList() {
           <div class="row-meta">
             ${badge(d.type, 'badge-type')}
             ${badge(d.status, statusClass(d.status))}
+            ${d.bloc ? badge('En bloc', 'badge-bloc') : ''}
           </div>
         </div>`;
       row.addEventListener('click', () =>

@@ -778,7 +778,7 @@ function groupIntoLines(items, linkAnnotations) {
         const plainText = l.items.map(it => it.str).join('').trim();
         const prevEndsWithPunctuation = /[.?!:;"')]$/.test(prevPlain);
         const nextStartsWithCapital = /^[A-Z]/.test(plainText.trimStart());
-        const nextStartsWithNumberedItem = /^(?:\d+\.\s|[a-z]\.\s)/i.test(plainText.trimStart());
+        const nextStartsWithNumberedItem = /^(?:\d+\.\s|[a-z]\.\s|[●•○◦]\s*)/i.test(plainText.trimStart());
         const nextIsEmpty = !plainText;
 
         paraBreak = prevEndsWithPunctuation || nextStartsWithCapital || nextStartsWithNumberedItem || nextIsEmpty;
@@ -831,15 +831,15 @@ function parseMeetingMetadata(pages, log) {
   }
 
   // Location & start time from line like "6:15pm, Graneek Room (Chifley Library) and Zoom"
-  // or "6:15 pm, Graneek Room..."
-  const timeLocMatch = allText.match(/(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM)),?\s+(.+)/m);
+  // or "6:15 pm, Graneek Room..." or "18:15, Graneek Room..."
+  const timeLocMatch = allText.match(/(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM)?),?\s+(.+)/m);
   if (timeLocMatch) {
     const startTime = normalizeTime(timeLocMatch[1]);
     state.meeting.location = timeLocMatch[2].trim();
     log.push({ cls: 'ok', msg: `Location: ${state.meeting.location}` });
 
-    // End time: "Meeting closed at 11:14 pm" or similar
-    const closeMatch = allText.match(/[Mm]eeting\s+closed\s+at\s+(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM))/i);
+    // End time: "Meeting closed at 11:14 pm" or "Meeting closed at 23:14"
+    const closeMatch = allText.match(/[Mm]eeting\s+closed\s+at\s+(\d{1,2}[:.]\d{2}\s*(?:am|pm|AM|PM)?)/i);
     if (closeMatch) {
       const endTime = normalizeTime(closeMatch[1]);
       state.meeting.duration = `${startTime} – ${endTime}`;
@@ -854,10 +854,28 @@ function parseMeetingMetadata(pages, log) {
 }
 
 function normalizeTime(raw) {
-  // "6:15pm" -> "6:15 pm", "6.15 PM" -> "6:15 pm"
+  // "6:15pm" -> "6:15 pm", "6.15 PM" -> "6:15 pm", "18:15" -> "6:15 pm"
   let t = raw.trim().replace('.', ':');
   t = t.replace(/(\d)(am|pm)/i, '$1 $2');
-  t = t.replace(/\s*(AM|PM|am|pm)/, (m, p) => ' ' + p.toLowerCase());
+
+  // Check if there's an am/pm suffix
+  if (/\s*(am|pm)/i.test(t)) {
+    t = t.replace(/\s*(AM|PM|am|pm)/, (m, p) => ' ' + p.toLowerCase());
+  } else {
+    // No am/pm — treat as 24-hour format
+    const parts = t.match(/^(\d{1,2}):(\d{2})$/);
+    if (parts) {
+      let hour = parseInt(parts[1]);
+      const min = parts[2];
+      if (hour >= 12 && hour <= 23) {
+        const displayHour = hour === 12 ? 12 : hour - 12;
+        t = `${displayHour}:${min} pm`;
+      } else {
+        const displayHour = hour === 0 ? 12 : hour;
+        t = `${displayHour}:${min} am`;
+      }
+    }
+  }
   return t;
 }
 
@@ -884,15 +902,28 @@ function parseMotions(pages, log) {
 
   // Find motion headings: "Motion 7.X: Title" or "Motion 7.X – Title"
   // They can be combined: "Motion 7.3: Title & Motion 7.4: Title"
+  // Also match "Motion: Title" (no number, e.g. under Other Business)
   const motionHeadingPattern = /^(Motion\s+\d+\.\d+\s*[:–\-–].+)$/gim;
   const headings = [];
+  let otherBusinessCounter = 0;
 
   for (let i = 0; i < lineIndex.length; i++) {
     const line = lineIndex[i];
-    // Check for motion heading
+    // Check for numbered motion heading: "Motion X.Y: Title"
     const match = line.text.match(/^Motion\s+(\d+\.\d+)\s*[:–\-–]\s*(.+)/i);
     if (match && (line.isBold || isLikelyHeading(line.text, lineIndex, i))) {
       headings.push({ lineIdx: i, pageNum: line.pageNum, text: line.text });
+    }
+    // Check for unnumbered motion heading: "Motion: Title" (e.g. Other Business)
+    else if (!match && /^Motion\s*:\s*(.+)/i.test(line.text) && (line.isBold || true)) {
+      const obMatch = line.text.match(/^Motion\s*:\s*(.+)/i);
+      if (obMatch) {
+        otherBusinessCounter++;
+        const obId = `OB.${otherBusinessCounter}`;
+        // Rewrite the line text to include the generated ID for downstream parsing
+        const syntheticText = `Motion ${obId}: ${obMatch[1]}`;
+        headings.push({ lineIdx: i, pageNum: line.pageNum, text: syntheticText, originalText: line.text });
+      }
     }
   }
 
@@ -1042,8 +1073,8 @@ function detectBlocGroupings(pages, log) {
 }
 
 function isLikelyHeading(text, lines, idx) {
-  // Heuristic: if the line starts with "Motion 7." it's probably a heading
-  return /^Motion\s+7\./i.test(text);
+  // Heuristic: if the line starts with "Motion X.Y" it's probably a heading
+  return /^Motion\s+\d+\.\d+/i.test(text);
 }
 
 function joinWithParagraphs(lines) {
@@ -1058,7 +1089,7 @@ function reflowParagraphs(text) {
     para.split('\n').reduce((acc, line) => {
       const trimmed = line.trim();
       if (!trimmed) return acc;
-      if (/^\d+\.\s/.test(trimmed) || /^[a-z]\.\s/i.test(trimmed)) {
+      if (/^\d+\.\s/.test(trimmed) || /^[a-z]\.\s/i.test(trimmed) || /^[●•○◦]\s*/.test(trimmed)) {
         return acc + (acc ? '\n' : '') + trimmed;
       }
       return acc + (acc ? ' ' : '') + trimmed;
@@ -1110,8 +1141,8 @@ function parseMotionBlock(lines, fullBlockText, log) {
     const rawMotion = text.substring(start, endIdx).trim();
     motionText = extractNumberedItems(rawMotion);
   } else {
-    // No explicit Motion marker - look for numbered items directly
-    const numberedStart = text.search(/^1\.\s/m);
+    // No explicit Motion marker - look for numbered items or bullet items directly
+    const numberedStart = text.search(/^(?:1\.\s|[●•])/m);
     if (numberedStart !== -1) {
       const moverIdx = text.search(/^Mover\s*:/im);
       const endIdx = moverIdx !== -1 ? moverIdx : text.length;
@@ -1129,8 +1160,14 @@ function parseMotionBlock(lines, fullBlockText, log) {
 
   // Status
   if (/motion\s+pass(?:es|ed)/i.test(text)) status = 'Passed';
+  else if (/motion\s+(?:\d+\.\d+\s+)?carri(?:es|ed)/i.test(text)) status = 'Passed';
   else if (/motion\s+fail(?:s|ed)/i.test(text)) status = 'Failed';
   else if (/motion\s+(?:is\s+)?withdrawn/i.test(text)) status = 'Withdrawn';
+  // Also check for standalone "carried" on its own line (bold)
+  if (!status) {
+    const carriedLine = text.match(/^\*?\*?carri(?:es|ed)\*?\*?\s*\.?\s*$/im);
+    if (carriedLine) status = 'Passed';
+  }
 
   // Amendments
   amendments = parseAmendments(text);
@@ -1140,7 +1177,7 @@ function parseMotionBlock(lines, fullBlockText, log) {
 
 function findMotionMarker(text) {
   // Find "Motion:", "Motion", "Action:", or "Action" on its own line (not "Motion 7.X")
-  const match = text.match(/^(?:Motion|Action)\s*:?\s*$/im);
+  const match = text.match(/^(?:Motion|Actions?)\s*:?\s*$/im);
   if (match) return match.index;
   return -1;
 }
@@ -1162,6 +1199,17 @@ function extractNumberedItems(text) {
       result.push(trimmed);
       collecting = true;
       currentLevel = 0;
+    }
+    // Main bullet item: ● or •
+    else if (/^[●•]\s*/.test(trimmed)) {
+      result.push('- ' + trimmed.replace(/^[●•]\s*/, ''));
+      collecting = true;
+      currentLevel = 0;
+    }
+    // Sub-item bullet: ○ or ◦
+    else if (/^[○◦]\s*/.test(trimmed) && collecting) {
+      result.push('   - ' + trimmed.replace(/^[○◦]\s*/, ''));
+      currentLevel = 1;
     }
     // Sub-item: a. b. c. etc.
     else if (/^[a-z]\.\s/i.test(trimmed) && collecting) {
@@ -1236,8 +1284,8 @@ function parseAmendments(text) {
     // Passed?
     if (/amendment\s+pass(?:es|ed)/i.test(block)) amend.passed = true;
     else if (/amendment\s+fail(?:s|ed)/i.test(block)) amend.passed = false;
-    // Also check for "carries"
-    else if (/amendment\s+carries/i.test(block)) amend.passed = true;
+    // Also check for "carries" or "carried"
+    else if (/amendment\s+carri(?:es|ed)/i.test(block)) amend.passed = true;
 
     // Friendly?
     if (/friendly/i.test(block)) amend.friendly = true;
@@ -1265,7 +1313,7 @@ function splitCombinedMotionSections(lines, ids) {
   }
 
   // Find all motion/action markers
-  const motionPattern = /^(?:Motion|Action)\s*:?\s*$/gim;
+  const motionPattern = /^(?:Motion|Actions?)\s*:?\s*$/gim;
   const motionPositions = [];
   let mm;
   while ((mm = motionPattern.exec(text)) !== null) {
