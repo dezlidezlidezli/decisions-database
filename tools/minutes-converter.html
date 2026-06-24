@@ -445,6 +445,85 @@
   .parse-log .warn { color: #e67700; }
   .parse-log .ok { color: var(--green); }
   .parse-log .err { color: var(--red); }
+
+  /* Source modal */
+  .source-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .source-modal.open { display: flex; justify-content: center; }
+  .source-modal-content {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .source-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    z-index: 1;
+  }
+  .source-modal-header h3 {
+    font-size: 1rem;
+    color: #00663e;
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+  .source-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #868e96;
+    padding: 0 4px;
+  }
+  .source-modal-close:hover { color: #212529; }
+  .source-modal-notes {
+    padding: 12px 24px;
+    font-size: 0.85rem;
+    color: #495057;
+    background: #fff3cd;
+    border-bottom: 1px solid #ffc107;
+  }
+  .source-modal-notes:empty { display: none; }
+  .source-modal-pages {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  .source-page-wrapper {
+    text-align: center;
+  }
+  .source-page-wrapper .page-label {
+    font-size: 0.75rem;
+    color: #868e96;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .source-page-wrapper canvas {
+    max-width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
 </style>
 </head>
 <body>
@@ -537,6 +616,17 @@
   </div>
 </div>
 
+<div id="source-modal" class="source-modal">
+  <div class="source-modal-content">
+    <div class="source-modal-header">
+      <h3 id="source-modal-title">Source pages</h3>
+      <button class="source-modal-close" id="source-modal-close">&times;</button>
+    </div>
+    <div id="source-modal-notes" class="source-modal-notes"></div>
+    <div id="source-modal-pages" class="source-modal-pages"></div>
+  </div>
+</div>
+
 <script type="module">
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
 
@@ -592,6 +682,7 @@ async function handleFile(file) {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    state.pdfDoc = pdf;
     const log = [];
     log.push({ cls: 'ok', msg: `Loaded PDF: ${pdf.numPages} pages` });
 
@@ -613,6 +704,15 @@ async function handleFile(file) {
     // When consecutive motions share the same page and some are missing data,
     // propagate from the one that has it
     fillEnBlocData(log);
+
+    // Post-process: compute page ranges for source viewing
+    for (let i = 0; i < state.motions.length; i++) {
+      const startPage = state.motions[i].minutesPage;
+      const endPage = i + 1 < state.motions.length
+        ? state.motions[i + 1].minutesPage
+        : Math.min(startPage + 2, pdf.numPages);
+      state.motions[i].pageRange = { start: startPage, end: endPage };
+    }
 
     log.push({ cls: 'ok', msg: `Done. ${state.motions.length} motions extracted.` });
 
@@ -1447,6 +1547,9 @@ function createMotionCard(motion, idx) {
       </div>
       <div class="field"><label>Page</label><input type="number" value="${motion.minutesPage}" data-field="minutesPage"></div>
     </div>
+    <div style="margin-bottom:12px;">
+      <button class="btn btn-sm btn-secondary js-view-source" data-idx="${idx}">View source</button>
+    </div>
     <div class="field"><label>Title</label><input type="text" value="${esc(motion.title)}" data-field="title"></div>
     <div class="field ${preambleClass}"><label>Preamble</label><textarea rows="4" data-field="preamble">${esc(motion.preamble)}</textarea></div>
     <div class="field ${fullTextClass}"><label>Motion Text</label><textarea rows="4" data-field="fullText">${esc(motion.fullText)}</textarea></div>
@@ -1483,6 +1586,12 @@ function createMotionCard(motion, idx) {
       if (field === 'minutesPage') val = parseInt(val) || 0;
       state.motions[idx][field] = val;
     });
+  });
+
+  // Wire up View source button
+  card.querySelector('.js-view-source')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSourceModal(idx);
   });
 
   return card;
@@ -1565,6 +1674,91 @@ window.deleteAmendment = function(motionIdx, amendIdx) {
   state.motions[motionIdx].amendments.splice(amendIdx, 1);
   renderReview();
 };
+
+// ── Source modal ──
+async function openSourceModal(motionIdx) {
+  const motion = state.motions[motionIdx];
+  if (!motion) return;
+
+  const modal = document.getElementById('source-modal');
+  const titleEl = document.getElementById('source-modal-title');
+  const notesEl = document.getElementById('source-modal-notes');
+  const pagesContainer = document.getElementById('source-modal-pages');
+
+  const pageRange = motion.pageRange || { start: motion.minutesPage, end: Math.min(motion.minutesPage + 2, state.pdfDoc ? state.pdfDoc.numPages : motion.minutesPage) };
+
+  titleEl.textContent = `Source: Motion ${motion.id} — Pages ${pageRange.start}–${pageRange.end}`;
+
+  // Build notes about missing fields
+  const notes = [];
+  if (!motion.status) {
+    notes.push(`⚠ Status not found between pages ${pageRange.start}–${pageRange.end}. Look for 'Motion passes/fails/carried' after the discussion.`);
+  }
+  if (!motion.mover) {
+    notes.push(`⚠ Mover not found. Look for 'Mover: Name' after the action items.`);
+  }
+  if (!motion.seconder) {
+    notes.push(`⚠ Seconder not found. Look for 'Seconder: Name' after the mover.`);
+  }
+  if (!motion.preamble) {
+    notes.push(`ℹ No preamble detected. This motion may not have one — verify below.`);
+  }
+  if (!motion.fullText) {
+    notes.push(`⚠ Motion text not found. Look for numbered items after 'Motion:' or 'Action:'.`);
+  }
+  notesEl.innerHTML = notes.length ? notes.map(n => `<div>${esc(n)}</div>`).join('') : '';
+
+  // Clear previous pages and show modal
+  pagesContainer.innerHTML = '<div style="padding:24px;color:var(--gray-600);">Rendering pages...</div>';
+  modal.classList.add('open');
+
+  if (!state.pdfDoc) {
+    pagesContainer.innerHTML = '<div style="padding:24px;color:var(--red);">PDF document not available. Re-upload the file to enable source viewing.</div>';
+    return;
+  }
+
+  // Render pages
+  pagesContainer.innerHTML = '';
+  for (let p = pageRange.start; p <= pageRange.end; p++) {
+    try {
+      const page = await state.pdfDoc.getPage(p);
+      const viewport = page.getViewport({ scale: 1.2 });
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'source-page-wrapper';
+      wrapper.innerHTML = `<div class="page-label">Page ${p}</div>`;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      wrapper.appendChild(canvas);
+      pagesContainer.appendChild(wrapper);
+
+      await page.render({
+        canvasContext: canvas.getContext('2d'),
+        viewport: viewport
+      }).promise;
+    } catch (err) {
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'padding:12px;color:var(--red);font-size:0.85rem;';
+      errDiv.textContent = `Error rendering page ${p}: ${err.message}`;
+      pagesContainer.appendChild(errDiv);
+    }
+  }
+}
+
+function closeSourceModal() {
+  document.getElementById('source-modal').classList.remove('open');
+}
+
+// Modal close handlers
+document.getElementById('source-modal-close').addEventListener('click', closeSourceModal);
+document.getElementById('source-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeSourceModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeSourceModal();
+});
 
 // ── Step 4: Export ──
 window.doExport = async function() {
