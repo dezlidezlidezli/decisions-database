@@ -1,0 +1,12 @@
+export default {
+  "id": "7.6",
+  "title": "Dysfunction on Campus",
+  "preamble": "On-campus events organised by student societies and residential halls alike are an essential part of student life at ANU. Overwhelmingly, these events are planned not by university staff, but by a relatively small group of dedicated and passionate students who take the initiative to contribute to our campus culture. However, for far too long these students have consistently faced unreasonable and overtly obstructionist behaviour from ANU management when attempting to plan events, especially with regard to booking spaces on campus. This includes societies being hit with cleaning fees of up to $200 before a scheduled event takes place, inconsistent booking practices which severely inconvenience club executives, attempted censorship of club events, and generally poor experiences from club executives thereof. This behaviour from Functions on Campus, Kambri Venues, and ANU Security is not good enough. Clubs form the backbone of our campus culture at ANU, which is itself an important part of maintaining the mental health and wellbeing of students, especially those who live on campus. The new regulations around bookings are also being used to curtail political and cultural expression and freedom of speech on campus, especially as it pertains to booking meetings, information stalls, and potentially organising protest events. This affects not just the social life of campus, but the ability to fight for causes students support, through events held by clubs as well as parts of ANUSA itself, including departments.\n\nAs a student union, we should fight to protect and nurture the one-of-a-kind student experience we enjoy at ANU. Our student societies should be encouraged by the university to add to student life at ANU, rather than being prevented from doing so.",
+  "fullText": "1. Condemn Functions on Campus, Kambri Venues, and ANU Security for their unfair, unreasonable and inconsistent treatment of clubs, especially with regard to the charging preemptive cleaning fees to clubs holding events on campus, and restrictions on the freedom of expression of students.\n2. Call on FOC and Kambri to provide a written response to the uptick in cleaning fees and inconsistent application of their own policy.",
+  "mover": "Tessa McNamara",
+  "seconder": "Chris Morris",
+  "minutesPage": 26,
+  "type": "Motion",
+  "status": "Passed",
+  "amendments": []
+};

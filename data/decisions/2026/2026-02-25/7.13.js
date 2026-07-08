@@ -1,0 +1,13 @@
+export default {
+  "id": "7.13",
+  "title": "Nature In Decline - Sullivan’s Creek",
+  "preamble": "Sullivan’s Creek is a crucial part of the ANU experience for all of our in-person students. For the thousands of on-campus students it’s an essential part of the daily commute around campus. For our off-campus students, it too is a crucial landmark and feature of the landscape of the university.\n\nOver the past 30 years the ANU has been attempting to redevelop and re-naturalise parts of the creek with steady progress. The latest step has been through the installation of Gabion Mattress and deliberate planting of native species around the creek. This was continuing smoothly starting up at the top of the creek as it entered ANU campus after the Grosse Particulate Trap under Barry Drive. This was until ANU Landscape and Conservation lost funding for the project during the earlier rounds of cuts. This has left most of the creek in a state of limbo. Algal blooms occur in the 3 settling ponds in the creek at least once a year which clog the creek with sediment and lead to fish die offs as they face oxygen deprivation in the water. With ever increasing temperatures and growingly infrequent rainfall, the traditional high-flow flood periods that usually clear out the stream are becoming increasingly rare. Without urgent landscape action soon, the creek will continue to face worsening biological outcomes and higher upkeep costs with more devastating high-flow flooding periods. A first step from the ANU is to restore funding to ANU Landscapes and Conservation to continue their long term project of rewilding the creek to make it suitable for the unique water systems and species in the Inner North.\n\nWithout this important restoration of funding, biodiversity will continue to decline, debris will pile up along the banks of the creek after every rainfall and the ability of the ANU community to enjoy any recreational benefit from the creek will be lost.",
+  "fullText": "1. SRC endorses refunding the ANU Landscape and Conservation team to pre-2019 levels\n2. SRC demands general action on the water quality and health of the waterways that are so crucial to the ANU and its unique identity\n3. SRC encourages the ANU to explore working with its own Fenner School of Environment to develop new ways to encourage biodiversity on campus\n4. SRC endorses the unique benefits Sullivan’s Creek provides to the student and staff population of the university",
+  "mover": "Flynn Wade-Schneiders",
+  "seconder": "Audrey Storer",
+  "minutesPage": 32,
+  "type": "Motion",
+  "status": "Passed",
+  "amendments": [],
+  "bloc": "bloc-7.13-7.14"
+};

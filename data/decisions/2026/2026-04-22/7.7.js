@@ -1,0 +1,12 @@
+export default {
+  "id": "7.7",
+  "title": "Executive Misconduct is an Unacceptable Governance Failure",
+  "preamble": "Recent reporting on former ANU Vice-Chancellor Genevieve Bell has raised serious allegations of misconduct, including attempts to influence internal processes, alter official records, and breach conflict-of-interest standards. These allegations have resulted in her suspension and consideration of a campus ban. While Professor Bell has since left the role, the issues revealed are not simply about one individual – they expose a governance system that allowed executive power to operate without meaningful scrutiny.\n\nFor students, governance failures are not abstract. They shape the quality of our education every day. When executives can act without transparency or accountability, the consequences are felt in course cuts, understaffed teaching, increased workloads, and decisions made behind closed doors that directly undermine the learning environment. The same opaque structures that enabled alleged misconduct also enabled RenewANU, which pushed through restructures that students and staff repeatedly warned would damage educational quality and the community we fight to protect.\n\nAcross the higher education sector, corporatised governance has concentrated authority in senior management while sidelining students, staff, and democratic oversight. The allegations against Bell are a symptom of a deeper crisis: a university model that prioritises executive discretion over community accountability.\n\nIn 2026, ANUSA reaffirms that accountable, transparent governance is essential to a university that serves its students, staff, and public mission.",
+  "fullText": "1. ANUSA demands that all senior executive appointments, performance reviews, and conflict-of-interest processes be subject to transparent reporting accessible to students and staff.\n2. ANUSA reaffirms its commitment to democratising university governance and calls for increased student and staff representation on all major decision-making bodies.\n3. ANUSA commits to working with the NUS, the NTEU, and other student unions to campaign for national governance standards that prevent executive misconduct and protect the integrity of public universities.",
+  "mover": "Aurora Neumann",
+  "seconder": "Oliver Walsh",
+  "minutesPage": 23,
+  "type": "Motion",
+  "status": "Passed",
+  "amendments": []
+};

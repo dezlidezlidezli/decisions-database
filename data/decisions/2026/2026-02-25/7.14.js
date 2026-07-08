@@ -1,0 +1,13 @@
+export default {
+  "id": "7.14",
+  "title": "Divestment in 2026 - The Overdue Reforms",
+  "preamble": "The ANU community has been formally pushing for the ANU to divest itself of its fossil fuel investments for almost a decade and a half. Falling under the names ‘ANU Zero’ and ‘Fossil Free ANU’, both staff and students have been campaigning for years. This year, the Environment Collective (EC) is stepping this into a new gear.\n\nAfter the course and staff cuts of last year and the following community and media backlash, the ANU is in a uniquely weak position. This makes now the perfect time to present the university with an alternative story in the media cycle. By revamping the campaign to new heights this year, the Collective wants to give the university an opportunity to take on divestment themselves with the support of the student body, or to risk another media blowout in which the ANU will be look as out of touch and unresponsive to the student body as it was under VC Bell.\n\nWith the tumultuous years of the EC now firmly behind us, the department itself is now finally primed to take on and lead this campaign. After a highly successful O Week, environmental activism is at the forefront of our student body’s mind.\n\nPending our upcoming General Divestment Meeting, the 2026 EC executive has endorsed a campaign goal of eliminating substantive fossil fuel investment by amending the Socially Responsible Investment Policy to negatively screen against the 200 highest emitting publicly traded companies. Under this proposal, the ANU’s two largest climate emitting investments in Woodside and BHP would no longer be compliant. This ‘top 200’ screening strategy was taken by La Trobe University in their own divestment policy back in 2015. This itself was inspired by the ANU’s limited divestment efforts in 2014.",
+  "fullText": "1. The SRC endorses the 2026 Fossil Fuel Divestment Campaign of the Environment Collective\n2. The SRC endorses amending the Socially Responsible Investment Policy by including restrictions on the top 200 highest emitting companies that are publicly traded.\n3. The SRC opposes the deliberate choice of the ANU to continue its investments in fossil fuels despite reconvening its Investments Committee on the 16th of February 2026.\n4. The SRC encourages the Undergraduate Representative on the ANU Council to re-raise the fossil fuel investment concerns of the SRC during the ANU Council in 2026.",
+  "mover": "Flynn Wade-Schneiders",
+  "seconder": "Audrey Storer",
+  "minutesPage": 33,
+  "type": "Motion",
+  "status": "Passed",
+  "amendments": [],
+  "bloc": "bloc-7.13-7.14"
+};
