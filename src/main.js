@@ -100,21 +100,28 @@ function _paint(view) {
 }
 
 // ── List rendering ────────────────────────────────────────────────────────────
-function filterDecisions(decisions) {
-  const raw    = searchInput.value.trim().toLowerCase();
-  const tokens = raw.replace(/[-\W]+/g, ' ').trim().split(/\s+/).filter(Boolean);
-  const typeVal    = typeFilter.value;
-  const statusVal  = statusFilter.value;
+function getSearchTokens() {
+  const raw = searchInput.value.trim().toLowerCase();
+  return raw.replace(/[-\W]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+}
+
+function hayFor(d) {
+  return ' ' + [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
+    ...(d.amendments || []).map(a => a.text)]
+    .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ') + ' ';
+}
+
+function filterDecisions(decisions, tokens, phraseMode) {
+  const typeVal   = typeFilter.value;
+  const statusVal = statusFilter.value;
 
   return decisions.filter(d => {
     if (typeVal   && d.type   !== typeVal)   return false;
     if (statusVal && d.status !== statusVal) return false;
     if (!tokens.length) return true;
-    const hay = ' ' + [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
-      ...(d.amendments || []).map(a => a.text)]
-      .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ') + ' ';
-    // Whole-word match for each term; the last term may be a prefix
-    // (so results narrow sensibly while typing).
+    const hay = hayFor(d);
+    if (phraseMode) return hay.includes(' ' + tokens.join(' '));
+    // Whole-word AND matching; the last term may be a prefix while typing.
     return tokens.every((t, i) =>
       i === tokens.length - 1 ? hay.includes(' ' + t) : hay.includes(' ' + t + ' '));
   });
@@ -131,10 +138,15 @@ function renderList() {
   listPanel.innerHTML = '';
   const groups = allGroups();
   const active = activeKeyFor(currentView());
+  const tokens = getSearchTokens();
+  // If the query appears anywhere as an exact consecutive phrase, show only
+  // exact phrase matches; otherwise fall back to whole-word AND matching.
+  const phraseMode = tokens.length > 1 &&
+    groups.some(g => g.decisions.some(d => hayFor(d).includes(' ' + tokens.join(' '))));
   let anyResults = false;
 
   for (const { meeting, decisions } of groups) {
-    const filtered = filterDecisions(decisions);
+    const filtered = filterDecisions(decisions, tokens, phraseMode);
     if (!filtered.length) continue;
     anyResults = true;
 
