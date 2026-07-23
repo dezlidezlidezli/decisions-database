@@ -8,7 +8,6 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
   const fullTextHtml         = d.fullText         ? marked.parse(d.fullText)         : '';
   const originalTextHtml     = d.originalText     ? marked.parse(d.originalText)     : '';
   const originalPreambleHtml = d.originalPreamble ? marked.parse(d.originalPreamble) : '';
-  const wasAmended           = (d.amendments || []).length > 0;
 
   const amendmentsHtml = (d.amendments || []).map(a => {
     const aFullText = a.fullText
@@ -64,13 +63,13 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
 
     ${preambleHtml ? `
     <div class="detail-section">
-      <div class="detail-section-title">Background</div>
+      <div class="detail-section-title">${d.originalPreamble ? 'Background as amended' : 'Background'}</div>
       <div class="markdown-body">${preambleHtml}</div>
     </div>` : ''}
 
     ${fullTextHtml ? `
     <div class="detail-section">
-      <div class="detail-section-title">${wasAmended ? 'Proposal as amended' : 'Proposal'}</div>
+      <div class="detail-section-title">${d.originalText ? 'Proposal as amended' : 'Proposal'}</div>
       <div class="markdown-body">${fullTextHtml}</div>
     </div>` : ''}
 
