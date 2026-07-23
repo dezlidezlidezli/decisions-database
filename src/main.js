@@ -110,10 +110,13 @@ function filterDecisions(decisions) {
     if (typeVal   && d.type   !== typeVal)   return false;
     if (statusVal && d.status !== statusVal) return false;
     if (!tokens.length) return true;
-    const hay = [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
+    const hay = ' ' + [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
       ...(d.amendments || []).map(a => a.text)]
-      .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ');
-    return tokens.every(t => hay.includes(t));
+      .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ') + ' ';
+    // Whole-word match for each term; the last term may be a prefix
+    // (so results narrow sensibly while typing).
+    return tokens.every((t, i) =>
+      i === tokens.length - 1 ? hay.includes(' ' + t) : hay.includes(' ' + t + ' '));
   });
 }
 
