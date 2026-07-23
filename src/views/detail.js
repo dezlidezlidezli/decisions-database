@@ -4,8 +4,10 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
   const meta = meetingMeta[meetingDate] || {};
   const blocSiblings = d.bloc ? decisions.filter(x => x.bloc === d.bloc && x.id !== d.id) : [];
 
-  const preambleHtml     = d.preamble  ? marked.parse(d.preamble)  : '';
-  const fullTextHtml     = d.fullText   ? marked.parse(d.fullText)   : '';
+  const preambleHtml     = d.preamble     ? marked.parse(d.preamble)     : '';
+  const fullTextHtml     = d.fullText     ? marked.parse(d.fullText)     : '';
+  const originalTextHtml = d.originalText ? marked.parse(d.originalText) : '';
+  const wasAmended       = (d.amendments || []).length > 0;
 
   const amendmentsHtml = (d.amendments || []).map(a => {
     const aFullText = a.fullText
@@ -67,15 +69,24 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
 
     ${fullTextHtml ? `
     <div class="detail-section">
-      <div class="detail-section-title">Action</div>
+      <div class="detail-section-title">${wasAmended ? 'Proposal as amended' : 'Proposal'}</div>
       <div class="markdown-body">${fullTextHtml}</div>
     </div>` : ''}
 
-    ${amendmentsHtml ? `
-    <div class="detail-section">
-      <div class="detail-section-title">Amendments</div>
-      <ul class="amendments-list">${amendmentsHtml}</ul>
-    </div>` : ''}
+    ${(originalTextHtml || amendmentsHtml) ? `
+    <details class="detail-section more-info">
+      <summary class="detail-section-title">More info: original proposal &amp; amendments</summary>
+      ${originalTextHtml ? `
+      <div class="more-info-sub">
+        <div class="detail-section-title">As originally moved</div>
+        <div class="markdown-body">${originalTextHtml}</div>
+      </div>` : ''}
+      ${amendmentsHtml ? `
+      <div class="more-info-sub">
+        <div class="detail-section-title">Amendments</div>
+        <ul class="amendments-list">${amendmentsHtml}</ul>
+      </div>` : ''}
+    </details>` : ''}
 
     `;
 

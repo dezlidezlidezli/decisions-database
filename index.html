@@ -319,6 +319,29 @@
       font-weight: 700; color: #222; margin: 1rem 0 .4rem;
     }
 
+    /* ── More info dropdown ── */
+    details.more-info > summary {
+      cursor: pointer;
+      margin-bottom: 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      user-select: none;
+    }
+    details.more-info > summary::-webkit-details-marker { display: none }
+    details.more-info > summary::before {
+      content: '▸';
+      font-size: .8rem;
+      transition: transform .15s;
+    }
+    details.more-info[open] > summary::before { transform: rotate(90deg) }
+    details.more-info > summary:hover { color: #1a2e6e }
+    details.more-info[open] > summary { margin-bottom: .75rem }
+    .more-info-sub { margin-bottom: 1rem }
+    .more-info-sub:last-child { margin-bottom: 0 }
+    .more-info-sub .detail-section-title { font-size: .7rem; color: #aaa }
+
     .amendments-list { list-style: none }
     .amendment-item {
       padding: .6rem 0;

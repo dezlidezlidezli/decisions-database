@@ -1,7 +1,7 @@
 export default {
   "id": "7.9",
   "title": "Implementation of the National Higher Education Code to Prevent and Respond to Gender-based Violence",
-  "preamble": "On the 1st of January, National Higher Education Code to Prevent and Respond to Gender-based Violence (National Code) came into effect, holding universities across Australia to a new and higher standard of consent education, reporting and disclosure processes and data collection. This Code was an initiative pushed for by the National Union of Students (NUS) and the STOP campaign, following years of student advocacy from around Australia.\n\nThe National Code is long overdue, especially in a climate of rising rates of femicide and violence against female-identifying people around Australia. For far too long, universities (especially the ANU) have neglected their responsibility to keep students safe. Their inadequate preventative measures have allowed and blind-sided the detrimental impacts of Domestic Violence and the generational trauma this triggers. As a place of development, change, and new beginnings for most people, especially victims of DV who come to university to rewrite their story, it is of utmost importance for the university to assist and aid their students in doing so.\n\nWith that being said, it is crucial for the ANU to implement the National Code immediately and effectively. This cannot turn into some performative measure for the ANU to use as some mechanism to make themselves seem progressive and unproblematic. Student safety must be prioritised over the ANU’s liability.\n\nThe ANU must adhere to all requirements of the code and expand beyond it to further improve the lives of female-identifying students, setting a precedent for other universities to follow. It is vital for the ANU to take action, rather than rely on words without promise. Now is the perfect time to do so.",
+  "preamble": "*This motion uses the term \"women\" to encompass the ANUSA Women's Department's membership as defined in their constitution. This includes all students who identify as women, and all gender diverse and intersex students who identify with the term \"women\".*\n\nOn the 1st of January, National Higher Education Code to Prevent and Respond to Gender-based Violence (National Code) came into effect, holding universities across Australia to a new and higher standard of consent education, reporting and disclosure processes and data collection. This Code was an initiative pushed for by the National Union of Students (NUS) and the STOP campaign, following years of student advocacy from around Australia.\n\nThe National Code is long overdue, especially in a climate of rising rates of femicide and violence against women around Australia. For far too long, universities (especially the ANU) have neglected their responsibility to keep students safe. Their inadequate preventative measures have allowed and blind-sided the detrimental impacts of Domestic Violence and the generational trauma this triggers. As a place of development, change, and new beginnings for most people, especially victims of DV who come to university to rewrite their story, it is of utmost importance for the university to assist and aid their students in doing so.\n\nWith that being said, it is crucial for the ANU to implement the National Code immediately and effectively. This cannot turn into some performative measure for the ANU to use as some mechanism to make themselves seem progressive and unproblematic. Student safety must be prioritised over the ANU’s liability.\n\nThe ANU must adhere to all requirements of the code and expand beyond it to further improve the lives of women, setting a precedent for other universities to follow. It is vital for the ANU to take action, rather than rely on words without promise. Now is the perfect time to do so.",
   "fullText": "1. To call on the ANU and ensure that the university adheres to and implements all measures and regulations in the National Code.\n2. To call on the ANU to engage in ongoing consultation with students and student leaders to ensure that the National Code is applied in the benefit of ANU students.\n3. To call on the ANU to ensure that the Working Group established and required to deliver key University-wide components of compliance activities is held accountable. This includes ensuring that the data collection, analysis and external reporting practices are compliant with the National Code. This data must be applied effectively to improve students wellbelling. From the data collection, analysis and external reporting practices. The working group should deliver a review of recommendations, such as the Student Disciplinary Framework and Nixon Reviews. This review should formulate adequate and accurate reports on Domestic Violence and Gender-based Violence rates on campus and develop effective measures in preventing this violence.",
   "mover": "Liv Yu",
   "seconder": "Katie Jakab",
@@ -10,12 +10,20 @@ export default {
   "status": "Passed",
   "amendments": [
     {
-      "text": "1. Amend the preamble of the motion to replace the uses of the terms ‘female-identifying people’ and...",
+      "text": "Replace “female-identifying people/students” with “women” in the preamble",
       "fullText": "1. Amend the preamble of the motion to replace the uses of the terms ‘female-identifying people’ and 'female-identifying students' with the term ‘women’.",
       "mover": "Lea Fallen",
-      "seconder": "Foreshadowed amendment to Motion 7.9 - #2",
-      "passed": false,
-      "friendly": false
+      "seconder": "",
+      "passed": true,
+      "friendly": true
+    },
+    {
+      "text": "Add definition of “women” to the preamble",
+      "fullText": "1. Add to the preamble, after the content warning, \"This motion uses the term \"women\" to encompass the ANUSA Women's Department's membership as defined in their constitution. This includes all students who identify as women, and all gender diverse and intersex students who identify with the term \"women\".\"",
+      "mover": "Jemma Rule",
+      "seconder": "Katie Jakab",
+      "passed": true,
+      "friendly": true
     }
   ]
 };
