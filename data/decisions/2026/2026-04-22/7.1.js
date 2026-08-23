@@ -7,6 +7,5 @@ export default {
   "seconder": "Anuva Rai",
   "minutesPage": 14,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

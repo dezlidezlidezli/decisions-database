@@ -7,6 +7,5 @@ export default {
   "seconder": "Flynn Wade-Schneiders",
   "minutesPage": 16,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

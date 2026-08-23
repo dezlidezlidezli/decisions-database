@@ -44,11 +44,4 @@ export function badge(text, cls) {
   return `<span class="badge ${cls}">${text}</span>`;
 }
 
-export function statusClass(status) {
-  if (status === 'Passed')    return 'badge-passed';
-  if (status === 'Withdrawn') return 'badge-withdrawn';
-  if (status === 'Lapsed')    return 'badge-lapsed';
-  return 'badge-failed';
-}
-
 export { marked };

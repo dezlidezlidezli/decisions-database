@@ -7,6 +7,5 @@ export default {
   "seconder": "Katie",
   "minutesPage": 25,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

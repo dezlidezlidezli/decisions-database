@@ -7,6 +7,5 @@ export default {
   "seconder": "Will Roche",
   "minutesPage": 11,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

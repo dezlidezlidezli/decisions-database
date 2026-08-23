@@ -1,4 +1,4 @@
-import { allGroups, meetingMeta, badge, statusClass } from './data.js';
+import { allGroups, meetingMeta, badge } from './data.js';
 import { renderDetail }  from './views/detail.js';
 import { renderMeeting } from './views/meeting.js';
 
@@ -11,8 +11,6 @@ const filtersBar   = document.getElementById('filtersBar');
 const searchInput  = document.getElementById('searchInput');
 const searchClear  = document.getElementById('searchClear');
 const searchWrap   = searchInput.closest('.search-wrap');
-const typeFilter   = document.getElementById('typeFilter');
-const statusFilter = document.getElementById('statusFilter');
 
 // ── Navigation state ──────────────────────────────────────────────────────────
 // Stack entries: { type: 'meeting'|'decision', meetingDate, decision? }
@@ -25,7 +23,7 @@ const isMobile    = () => window.innerWidth <= 640;
 function updateBackBtn() {
   const prev = navStack[navStack.length - 2] ?? null;
   if (!prev) {
-    backBtn.textContent = '← All decisions';
+    backBtn.textContent = '← All motions';
   } else if (prev.type === 'meeting') {
     const meta = meetingMeta[prev.meetingDate];
     backBtn.textContent = '← ' + (meta ? meta.name : prev.meetingDate);
@@ -60,7 +58,7 @@ backBtn.addEventListener('click', () => {
     _paint(prev);
     renderList();
   } else {
-    detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details</div>';
+    detailBody.innerHTML = '<div class="detail-empty">Select a motion to view details</div>';
     renderList();
   }
   syncPanels();
@@ -106,18 +104,12 @@ function getSearchTokens() {
 }
 
 function hayFor(d) {
-  return ' ' + [d.id, d.title, d.preamble, d.mover, d.seconder, d.fullText,
-    ...(d.amendments || []).map(a => a.text)]
+  return ' ' + [d.id, d.title, d.mover, d.seconder, d.fullText]
     .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ') + ' ';
 }
 
 function filterDecisions(decisions, tokens, phraseMode) {
-  const typeVal   = typeFilter.value;
-  const statusVal = statusFilter.value;
-
   return decisions.filter(d => {
-    if (typeVal   && d.type   !== typeVal)   return false;
-    if (statusVal && d.status !== statusVal) return false;
     if (!tokens.length) return true;
     const hay = hayFor(d);
     if (phraseMode) return hay.includes(' ' + tokens.join(' '));
@@ -167,11 +159,7 @@ function renderList() {
         <div class="row-id">${d.id}</div>
         <div class="row-body">
           <div class="row-title">${d.title}</div>
-          <div class="row-meta">
-            ${badge(d.type, 'badge-type')}
-            ${badge(d.status, statusClass(d.status))}
-            ${d.bloc ? badge('En bloc', 'badge-bloc') : ''}
-          </div>
+          ${d.bloc ? `<div class="row-meta">${badge('En bloc', 'badge-bloc')}</div>` : ''}
         </div>`;
       row.addEventListener('click', () =>
         navigateTo({ type: 'decision', meetingDate: meeting, decision: d }));
@@ -180,11 +168,11 @@ function renderList() {
   }
 
   if (!anyResults) {
-    listPanel.innerHTML = '<div class="no-results">No decisions match your filters.</div>';
+    listPanel.innerHTML = '<div class="no-results">No motions match your search.</div>';
   }
 }
 
-// ── Filters ───────────────────────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────────────────
 searchInput.addEventListener('input', () => {
   searchWrap.classList.toggle('has-value', searchInput.value.length > 0);
   renderList();
@@ -195,8 +183,6 @@ searchClear.addEventListener('click', () => {
   searchInput.focus();
   renderList();
 });
-typeFilter.addEventListener('change',   renderList);
-statusFilter.addEventListener('change', renderList);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {

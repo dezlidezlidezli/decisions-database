@@ -7,6 +7,5 @@ export default {
   "seconder": "Aurora Neumann",
   "minutesPage": 26,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

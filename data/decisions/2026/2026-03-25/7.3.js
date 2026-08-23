@@ -7,6 +7,5 @@ export default {
   "seconder": "Tom Hughes",
   "minutesPage": 20,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

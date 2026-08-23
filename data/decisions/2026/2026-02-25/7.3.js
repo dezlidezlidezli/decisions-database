@@ -7,6 +7,5 @@ export default {
   "seconder": "Lea Fallen",
   "minutesPage": 10,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

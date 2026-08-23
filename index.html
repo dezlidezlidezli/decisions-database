@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>ANUSA Decisions Database</title>
+  <title>ANUSA SRC Policy Register</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
@@ -49,8 +49,7 @@
       gap: .75rem;
       flex-shrink: 0;
     }
-    .filters input,
-    .filters select {
+    .filters input {
       padding: .45rem .7rem;
       font-size: .875rem;
       font-family: 'Roboto', sans-serif;
@@ -60,7 +59,7 @@
       color: #333;
       outline: none;
     }
-    .search-wrap { flex: 2; position: relative; display: flex; align-items: center; }
+    .search-wrap { flex: 1; position: relative; display: flex; align-items: center; }
     .search-wrap input { flex: 1; padding-right: 2rem; }
     .search-clear {
       position: absolute; right: .5rem;
@@ -70,9 +69,7 @@
     }
     .search-clear:hover { color: #555; }
     .search-wrap.has-value .search-clear { display: block; }
-    .filters select { flex: 1 }
-    .filters input:focus,
-    .filters select:focus { border-color: #1a2e6e; background: #fff }
+    .filters input:focus { border-color: #1a2e6e; background: #fff }
 
     /* ── Split layout ── */
     .workspace {
@@ -158,34 +155,6 @@
       border-radius: 4px;
       font-size: .7rem;
       font-weight: 600;
-    }
-    .badge-type {
-      background: #eef2ff;
-      color: #3730a3;
-    }
-    .badge-passed {
-      background: #dcfce7;
-      color: #166534;
-    }
-    .badge-failed {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-    .badge-friendly {
-      background: #e0f8e9;
-      color: #047a37;
-    }
-    .badge-unfriendly {
-      background: #fde0e0;
-      color: #a30e0e;
-    }
-    .badge-withdrawn {
-      background: #f3f0ff;
-      color: #5b21b6;
-    }
-    .badge-lapsed {
-      background: #fef3c7;
-      color: #92400e;
     }
     .badge-bloc {
       background: #ebf0ff;
@@ -319,64 +288,6 @@
       font-weight: 700; color: #222; margin: 1rem 0 .4rem;
     }
 
-    /* ── More info dropdown ── */
-    details.more-info > summary {
-      cursor: pointer;
-      margin-bottom: 0;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      user-select: none;
-    }
-    details.more-info > summary::-webkit-details-marker { display: none }
-    details.more-info > summary::before {
-      content: '▸';
-      font-size: .8rem;
-      transition: transform .15s;
-    }
-    details.more-info[open] > summary::before { transform: rotate(90deg) }
-    details.more-info > summary:hover { color: #1a2e6e }
-    details.more-info[open] > summary { margin-bottom: .75rem }
-    .more-info-sub { margin-bottom: 1rem }
-    .more-info-sub:last-child { margin-bottom: 0 }
-    .more-info-sub .detail-section-title { font-size: .7rem; color: #aaa }
-
-    .amendments-list { list-style: none }
-    .amendment-item {
-      padding: .6rem 0;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: .875rem;
-    }
-    .amendment-item:last-child { border-bottom: none }
-    .amendment-text { flex: 1; color: #444 }
-    .amendment-result {
-      font-weight: 700;
-      font-size: .8rem;
-    }
-    .amendment-result.passed { color: #166534 }
-    .amendment-result.failed { color: #991b1b }
-
-    .amendment-main { flex: 1 }
-    .amendment-top {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      flex-wrap: wrap;
-    }
-    .amendment-full-text {
-      margin-top: .4rem;
-      font-size: .85rem;
-      color: #555;
-      line-height: 1.5;
-      padding-left: .25rem;
-      border-left: 2px solid #e0e0e0;
-    }
-    .amendment-movers {
-      margin-top: .25rem;
-      font-size: .78rem;
-      color: #999;
-    }
     .minutes-link {
       font-size: .8rem;
       color: #366BEF;
@@ -484,7 +395,6 @@
         gap: .5rem;
       }
       .filters input  { flex: 1 1 100% }
-      .filters select { flex: 1 1 calc(50% - .25rem) }
 
       .workspace {
         flex-direction: column;
@@ -523,30 +433,18 @@
 <body>
 
   <header class="site-header">
-    <a href="#" class="logo">Decisions Database</a>
+    <a href="#" class="logo">SRC Policy Register</a>
   </header>
 
   <div class="disclaimer-bar">
-    For informational purposes only &mdash; may contain inaccuracies. This is not an official or legal record of meetings. Refer to the minutes linked next to each meeting heading for the authoritative record.
+    A record of motions <strong>passed</strong> by the ANUSA SRC. Unsuccessful motions, amendments and debate are not recorded here &mdash; see the official minutes, linked on every entry, for the complete record. For informational purposes only; this is not an official or legal record of meetings and may contain inaccuracies.
   </div>
 
   <div class="filters" id="filtersBar">
     <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="Search decisions…">
+      <input type="text" id="searchInput" placeholder="Search passed motions…">
       <button id="searchClear" class="search-clear" aria-label="Clear search">×</button>
     </div>
-    <select id="typeFilter">
-      <option value="">All Types</option>
-      <option value="Motion">Motions</option>
-      <option value="Appointment">Appointments</option>
-    </select>
-    <select id="statusFilter">
-      <option value="">All Outcomes</option>
-      <option value="Passed">Passed</option>
-      <option value="Failed">Failed</option>
-      <option value="Withdrawn">Withdrawn</option>
-      <option value="Lapsed">Lapsed</option>
-    </select>
   </div>
 
   <div class="workspace">

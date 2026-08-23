@@ -7,6 +7,5 @@ export default {
   "seconder": "Oliver Walsh",
   "minutesPage": 23,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

@@ -7,6 +7,5 @@ export default {
   "seconder": "Leila Clarke",
   "minutesPage": 30,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

@@ -7,6 +7,5 @@ export default {
   "seconder": "Charley Ellwood",
   "minutesPage": 28,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

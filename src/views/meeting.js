@@ -1,17 +1,7 @@
-import { meetingMeta, badge, statusClass } from '../data.js';
+import { meetingMeta, badge } from '../data.js';
 
 export function renderMeeting(meetingDate, decisions, { onDecisionClick }) {
   const meta = meetingMeta[meetingDate] || {};
-
-  const total     = decisions.length;
-  const passed    = decisions.filter(d => d.status === 'Passed').length;
-  const failed    = decisions.filter(d => d.status === 'Failed').length;
-  const withdrawn = decisions.filter(d => d.status === 'Withdrawn').length;
-  const statLine  = [
-    `${passed} passed`,
-    failed    ? `${failed} failed`    : null,
-    withdrawn ? `${withdrawn} withdrawn` : null,
-  ].filter(Boolean).join(', ');
 
   const el = document.createElement('div');
   el.className = 'detail-content';
@@ -35,13 +25,13 @@ export function renderMeeting(meetingDate, decisions, { onDecisionClick }) {
     </div>` : ''}
 
     <div class="detail-section">
-      <div class="detail-section-title">Motions (${total} total — ${statLine})</div>
+      <div class="detail-section-title">Motions passed (${decisions.length})</div>
       <div class="meeting-motions-list">
         ${decisions.map(d => `
           <div class="meeting-motion-row js-motion-row" data-id="${d.id}" data-meeting="${meetingDate}">
             <span class="row-id" style="min-width:36px;flex-shrink:0">${d.id}</span>
             <span style="flex:1;font-size:.875rem;color:#333;line-height:1.4">${d.title}</span>
-            ${badge(d.status, statusClass(d.status))}
+            ${d.bloc ? badge('En bloc', 'badge-bloc') : ''}
             <span class="meeting-motion-arrow">→</span>
           </div>`).join('')}
       </div>

@@ -7,6 +7,5 @@ export default {
   "seconder": "Ell Lappin",
   "minutesPage": 8,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

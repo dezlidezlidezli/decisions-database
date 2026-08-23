@@ -7,6 +7,5 @@ export default {
   "seconder": "Seamus Giveen",
   "minutesPage": 16,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

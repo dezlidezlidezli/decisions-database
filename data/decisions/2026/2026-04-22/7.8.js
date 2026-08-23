@@ -7,6 +7,5 @@ export default {
   "seconder": "Malakai King",
   "minutesPage": 24,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

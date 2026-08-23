@@ -611,6 +611,7 @@
         <h3>Export Complete</h3>
         <p>Place the files in:</p>
         <div class="folder-path" id="folder-path"></div>
+        <div id="export-skipped" style="margin-top:12px;"></div>
         <div style="margin-top:20px;">
           <div class="preview-tabs" id="preview-tabs"></div>
           <div class="preview-box" id="preview-box"></div>
@@ -1913,8 +1914,16 @@ window.doExport = async function() {
     minutesUrl: state.meeting.minutesUrl
   });
 
-  // Motion files
+  // Motion files. The published site is a policy register: only motions that
+  // passed are exported, and amendments are not — preamble/fullText must
+  // already hold the text as passed. Amendments stay in the review UI so the
+  // operator can work that text out.
+  const skipped = [];
   for (const motion of state.motions) {
+    if (motion.status !== 'Passed') {
+      skipped.push(`${motion.id} (${motion.status || 'no outcome recorded'})`);
+      continue;
+    }
     const filename = `${motion.id}.js`;
     const motionData = {
       id: motion.id,
@@ -1925,15 +1934,7 @@ window.doExport = async function() {
       seconder: motion.seconder,
       minutesPage: motion.minutesPage,
       type: motion.type,
-      status: motion.status,
-      amendments: motion.amendments.map(a => ({
-        text: a.text,
-        fullText: a.fullText,
-        mover: a.mover,
-        seconder: a.seconder,
-        passed: a.passed,
-        friendly: a.friendly
-      }))
+      status: motion.status
     };
     // Include bloc field only when it exists
     if (motion.bloc) {
@@ -1961,6 +1962,15 @@ window.doExport = async function() {
   // Show export panel
   goToStep(4);
   document.getElementById('folder-path').textContent = `data/decisions/${year}/${folderName}/`;
+
+  // Never let exclusions be silent — the operator must see what was left out.
+  const skippedEl = document.getElementById('export-skipped');
+  skippedEl.innerHTML = skipped.length
+    ? `<div style="background:var(--yellow-warn);border:1px solid var(--yellow-border);border-radius:var(--radius);padding:10px 14px;font-size:0.85rem;color:#856404;text-align:left;">
+         <strong>Not exported (${skipped.length}):</strong> ${esc(skipped.join(', '))}.<br>
+         The register records passed motions only. Amendments are never exported &mdash; check that each preamble and motion text is the version <em>as passed</em>.
+       </div>`
+    : '';
 
   // File preview tabs
   const tabsEl = document.getElementById('preview-tabs');

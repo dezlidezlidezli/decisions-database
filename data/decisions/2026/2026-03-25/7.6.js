@@ -7,6 +7,5 @@ export default {
   "seconder": "Chris Morris",
   "minutesPage": 26,
   "type": "Motion",
-  "status": "Passed",
-  "amendments": []
+  "status": "Passed"
 };

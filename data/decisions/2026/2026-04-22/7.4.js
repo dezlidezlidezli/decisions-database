@@ -8,6 +8,5 @@ export default {
   "minutesPage": 19,
   "type": "Motion",
   "status": "Passed",
-  "amendments": [],
   "bloc": "bloc-7.3-7.4-7.5"
 };
