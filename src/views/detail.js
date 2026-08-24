@@ -15,9 +15,15 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
       <div class="detail-title">${d.title}</div>
       ${blocSiblings.length ? `
       <div class="bloc-notice">
-        Voted en bloc with ${blocSiblings.map(s => `<button class="bloc-link js-bloc-link" data-id="${s.id}">${s.id} ${s.title}</button>`).join(', ')}
+        Voted upon en bloc with ${blocSiblings.map(s => `<button class="bloc-link js-bloc-link" data-id="${s.id}">${s.id} ${s.title}</button>`).join(', ')}
       </div>` : ''}
     </div>
+
+    ${d.contentWarning ? `
+    <div class="content-warning" role="note">
+      <span class="content-warning-label">Content warning</span>
+      <span class="content-warning-text">${d.contentWarning}</span>
+    </div>` : ''}
 
     <div class="detail-meta-grid">
       <div class="meta-item">
