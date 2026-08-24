@@ -1155,6 +1155,7 @@ function parseMotions(pages, log) {
         id,
         title: titles[0] || '',
         preamble: parsed.preamble,
+        contentWarning: parsed.contentWarning,
         fullText: parsed.fullText,
         mover: parsed.mover,
         seconder: parsed.seconder,
@@ -1175,6 +1176,7 @@ function parseMotions(pages, log) {
           id: ids[mi],
           title: titles[mi] || titles[0] || '',
           preamble: section.preamble || parsed.preamble,
+          contentWarning: section.contentWarning || parsed.contentWarning,
           fullText: section.fullText || (mi === 0 ? parsed.fullText : ''),
           mover: section.mover || parsed.mover,
           seconder: section.seconder || parsed.seconder,
@@ -1320,8 +1322,15 @@ function parseMotionBlock(lines, fullBlockText, log) {
     }
   }
 
-  // Remove content warning from preamble start
-  preamble = preamble.replace(/^Content\s+Warning\s*:?[^\n]*\n*/i, '').trim();
+  // Lift any content/trigger warning out of the preamble. The site collapses
+  // the preamble behind a disclosure, so the warning is shown separately above
+  // it — it must not be captured as ordinary preamble text.
+  let contentWarning = '';
+  const cwMatch = preamble.match(/^\s*(?:Content\s+Warning|Content\s+warning|Trigger\s+warning|TW|CW)\s*:?\s*([^\n]*)/i);
+  if (cwMatch) {
+    contentWarning = cwMatch[1].trim();
+    preamble = preamble.slice(cwMatch[0].length).trim();
+  }
 
   // Reflow: collapse PDF line wraps into spaces, preserve paragraph breaks
   preamble = reflowParagraphs(preamble);
@@ -1370,7 +1379,7 @@ function parseMotionBlock(lines, fullBlockText, log) {
   // Amendments
   amendments = parseAmendments(text);
 
-  return { preamble, fullText: motionText, mover, seconder, status, amendments };
+  return { preamble, contentWarning, fullText: motionText, mover, seconder, status, amendments };
 }
 
 function findMotionMarker(text) {
@@ -1387,6 +1396,7 @@ function extractNumberedItems(text) {
   const result = [];
   let collecting = false;
   let currentLevel = 0; // 0 = main (1.), 1 = sub (a.), 2 = sub-sub (i.)
+  let letterRun = 0;    // lettered sub-items seen under the current main item
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -1396,7 +1406,7 @@ function extractNumberedItems(text) {
     if (/^\d+\.\s/.test(trimmed)) {
       result.push(trimmed);
       collecting = true;
-      currentLevel = 0;
+      currentLevel = 0; letterRun = 0;
     }
     // Main bullet item: ● or •
     else if (/^[●•]\s*/.test(trimmed)) {
@@ -1404,19 +1414,25 @@ function extractNumberedItems(text) {
       collecting = true;
       currentLevel = 0;
     }
+    // Sub-levels are emitted as real markdown list items indented in steps of
+    // four. Three-space steps put a child on its parent's content column, where
+    // the renderer stops nesting; the site's CSS supplies the a. / i. markers.
     // Sub-item bullet: ○ or ◦
     else if (/^[○◦]\s*/.test(trimmed) && collecting) {
-      result.push('   - ' + trimmed.replace(/^[○◦]\s*/, ''));
+      result.push('    - ' + trimmed.replace(/^[○◦]\s*/, ''));
       currentLevel = 1;
     }
-    // Sub-item: a. b. c. etc.
-    else if (/^[a-z]\.\s/i.test(trimmed) && collecting) {
-      result.push('   ' + trimmed);
-      currentLevel = 1;
+    // Sub-item: a. b. c. etc. "i." is ambiguous — it is the ninth letter but
+    // also the first roman numeral. Treat it as a letter only once eight
+    // lettered siblings have actually been seen.
+    else if (/^[a-z]\.\s/i.test(trimmed) && collecting
+             && !(/^i\.\s/i.test(trimmed) && letterRun < 8)) {
+      result.push('    1. ' + trimmed.replace(/^[a-z]\.\s*/i, ''));
+      currentLevel = 1; letterRun++;
     }
     // Sub-sub-item: i. ii. iii. iv. etc. (roman numerals)
     else if (/^(?:i{1,3}|iv|vi{0,3}|ix|x)\.\s/i.test(trimmed) && collecting && currentLevel >= 1) {
-      result.push('      ' + trimmed);
+      result.push('        1. ' + trimmed.replace(/^(?:i{1,3}|iv|vi{0,3}|ix|x)\.\s*/i, ''));
       currentLevel = 2;
     }
     // Continuation of previous item (no number prefix, not a marker)
@@ -1645,6 +1661,7 @@ function createMotionCard(motion, idx) {
       <button class="btn btn-sm btn-secondary js-view-source" data-idx="${idx}">View source</button>
     </div>
     <div class="field"><label>Title</label><input type="text" value="${esc(motion.title)}" data-field="title"></div>
+    <div class="field"><label>Content warning <span style="font-weight:400;color:var(--gray-600);">(shown above the fold; leave blank if none)</span></label><input type="text" value="${esc(motion.contentWarning || '')}" data-field="contentWarning"></div>
     <div class="field ${preambleClass}"><label>Preamble</label><textarea rows="4" data-field="preamble">${esc(motion.preamble)}</textarea></div>
     <div class="field ${fullTextClass}"><label>Motion Text</label><textarea rows="4" data-field="fullText">${esc(motion.fullText)}</textarea></div>
     <div class="field-row">
@@ -1757,6 +1774,7 @@ window.addBlankMotion = function() {
   state.motions.push({
     id: newId,
     title: '',
+    contentWarning: '',
     preamble: '',
     fullText: '',
     mover: '',
@@ -1936,6 +1954,16 @@ window.doExport = async function() {
       type: motion.type,
       status: motion.status
     };
+    // Content warning sits directly after the title, as in the data files.
+    if (motion.contentWarning && motion.contentWarning.trim()) {
+      const ordered = {};
+      for (const [k, v] of Object.entries(motionData)) {
+        ordered[k] = v;
+        if (k === 'title') ordered.contentWarning = motion.contentWarning.trim();
+      }
+      Object.keys(motionData).forEach(k => delete motionData[k]);
+      Object.assign(motionData, ordered);
+    }
     // Include bloc field only when it exists
     if (motion.bloc) {
       motionData.bloc = motion.bloc;
