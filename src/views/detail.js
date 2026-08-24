@@ -45,7 +45,7 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
 
     ${preambleHtml ? `
     <details class="detail-section more-info">
-      <summary class="detail-section-title">Background</summary>
+      <summary class="detail-section-title">Preamble</summary>
       <div class="markdown-body">${preambleHtml}</div>
     </details>` : ''}
 

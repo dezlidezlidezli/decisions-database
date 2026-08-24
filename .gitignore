@@ -3,4 +3,6 @@ node_modules/
 **/.DS_Store
 .claude/
 *.png
+# Site assets are deliberate and must ship; stray screenshots stay ignored.
+!assets/*.png
 dist/
