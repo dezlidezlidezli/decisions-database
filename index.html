@@ -287,9 +287,16 @@
     }
     .markdown-body p { margin-bottom: .75rem }
     .markdown-body p:last-child { margin-bottom: 0 }
-    .markdown-body ol, .markdown-body ul { padding-left: 1.25rem; margin-bottom: .75rem }
+    .markdown-body ol, .markdown-body ul { padding-left: 1.5rem; margin-bottom: .75rem }
     .markdown-body li { margin-bottom: .4rem; line-height: 1.6 }
     .markdown-body li:last-child { margin-bottom: 0 }
+    /* Motions nest their action points 1. → a. → i. → 1., as the minutes do. */
+    .markdown-body ol { list-style-type: decimal }
+    .markdown-body ol ol { list-style-type: lower-alpha }
+    .markdown-body ol ol ol { list-style-type: lower-roman }
+    .markdown-body ol ol ol ol { list-style-type: decimal }
+    .markdown-body li > ol, .markdown-body li > ul { margin-top: .4rem; margin-bottom: 0 }
+    .markdown-body ol ol { padding-left: 1.4rem }
     .markdown-body strong { font-weight: 600; color: #333 }
     .markdown-body em { font-style: italic }
     .markdown-body a { color: #366BEF }
