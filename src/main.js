@@ -104,7 +104,7 @@ function getSearchTokens() {
 }
 
 function hayFor(d) {
-  return ' ' + [d.id, d.title, d.mover, d.seconder, d.fullText]
+  return ' ' + [d.id, d.title, d.mover, d.seconder, d.fullText, d.preamble]
     .filter(Boolean).join(' ').toLowerCase().replace(/[-\W]+/g, ' ') + ' ';
 }
 

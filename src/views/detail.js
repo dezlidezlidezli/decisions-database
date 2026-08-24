@@ -5,6 +5,7 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
   const blocSiblings = d.bloc ? decisions.filter(x => x.bloc === d.bloc && x.id !== d.id) : [];
 
   const fullTextHtml = d.fullText ? marked.parse(d.fullText) : '';
+  const preambleHtml = d.preamble ? marked.parse(d.preamble) : '';
 
   const el = document.createElement('div');
   el.className = 'detail-content';
@@ -41,6 +42,12 @@ export function renderDetail(d, meetingDate, { onMeetingClick, onDecisionClick, 
       <div class="detail-section-title">Resolution</div>
       <div class="markdown-body">${fullTextHtml}</div>
     </div>` : ''}
+
+    ${preambleHtml ? `
+    <details class="detail-section more-info">
+      <summary class="detail-section-title">Background</summary>
+      <div class="markdown-body">${preambleHtml}</div>
+    </details>` : ''}
 
     `;
 
