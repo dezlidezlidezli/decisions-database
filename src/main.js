@@ -19,6 +19,61 @@ let navStack = [];
 const currentView = () => navStack[navStack.length - 1] ?? null;
 const isMobile    = () => window.innerWidth <= 640;
 
+// ── Routing ───────────────────────────────────────────────────────────────────
+// Hash routing (not paths) because GitHub Pages serves no rewrites: a real path
+// would 404 on refresh or on a shared link. Each view gets a citable URL, and
+// the whole nav stack rides along in history.state so back/forward restore the
+// exact trail — including the in-app back button's label.
+
+function hashFor(view) {
+  if (!view) return '#/';
+  return view.type === 'meeting'
+    ? `#/m/${view.meetingDate}`
+    : `#/d/${view.meetingDate}/${encodeURIComponent(view.decision.id)}`;
+}
+
+// Views hold a live decision object; history.state must stay serialisable.
+const serializeStack = () =>
+  navStack.map(v => ({ type: v.type, meetingDate: v.meetingDate, id: v.decision?.id }));
+
+function hydrate(entry) {
+  if (!entry) return null;
+  if (entry.type === 'meeting') {
+    return meetingMeta[entry.meetingDate]
+      ? { type: 'meeting', meetingDate: entry.meetingDate }
+      : null;
+  }
+  const group = allGroups().find(g => g.meeting === entry.meetingDate);
+  const decision = group?.decisions.find(d => d.id === entry.id);
+  return decision ? { type: 'decision', meetingDate: entry.meetingDate, decision } : null;
+}
+
+// A shared or refreshed URL has no history.state, so rebuild a stack from it.
+function stackFromHash(hash) {
+  const m = /^#\/m\/([^/]+)\/?$/.exec(hash);
+  if (m) return [{ type: 'meeting', meetingDate: decodeURIComponent(m[1]) }];
+  const d = /^#\/d\/([^/]+)\/([^/]+)\/?$/.exec(hash);
+  if (d) return [{ type: 'decision', meetingDate: decodeURIComponent(d[1]), id: decodeURIComponent(d[2]) }];
+  return [];
+}
+
+function applyStack(entries) {
+  navStack = entries.map(hydrate).filter(Boolean);
+  const view = currentView();
+  if (view) {
+    _paint(view);
+  } else {
+    detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details.</div>';
+  }
+  renderList();
+  syncPanels();
+}
+
+window.addEventListener('popstate', (e) => {
+  applyStack(e.state?.stack ?? stackFromHash(location.hash));
+  if (isMobile()) window.scrollTo(0, 0);
+});
+
 // ── Back button label ─────────────────────────────────────────────────────────
 function updateBackBtn() {
   const prev = navStack[navStack.length - 2] ?? null;
@@ -50,24 +105,27 @@ function syncPanels() {
 window.addEventListener('resize', syncPanels);
 
 // ── Back button ───────────────────────────────────────────────────────────────
-// Pop the stack: if something remains below, re-render that view; else show list.
 backBtn.addEventListener('click', () => {
-  navStack.pop();
-  const prev = currentView();
-  if (prev) {
-    _paint(prev);
-    renderList();
-  } else {
-    detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details.</div>';
-    renderList();
+  // Defer to real history so the browser's own back button stays in step.
+  if ((history.state?.depth ?? 0) > 0) {
+    history.back();
+    return;
   }
-  syncPanels();
+  // Landed straight on a shared link — nothing of ours is behind, so go to the
+  // list rather than navigating away from the site.
+  history.pushState({ stack: [], depth: 0 }, '', '#/');
+  applyStack([]);
   if (isMobile()) window.scrollTo(0, 0);
 });
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 function navigateTo(view) {
   navStack.push(view);
+  history.pushState(
+    { stack: serializeStack(), depth: (history.state?.depth ?? 0) + 1 },
+    '',
+    hashFor(view),
+  );
   _paint(view);
   renderList();
   syncPanels();
@@ -186,6 +244,8 @@ searchClear.addEventListener('click', () => {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  syncPanels();
-  renderList();
+  const entries = stackFromHash(location.hash);
+  // Anchor this entry so back/forward always have a base to return to.
+  history.replaceState({ stack: entries, depth: 0 }, '', entries.length ? location.hash : '#/');
+  applyStack(entries);
 });
