@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>ANUSA SRC Policy Register</title>
+  <title>ANUSA SRC Decisions Register</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
@@ -12,32 +12,49 @@
 
     body {
       font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: #f4f5f7;
-      color: #222;
+      background: #FFFBF3;
+      color: #312C2A;
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* ── Header ── */
+    /* ── Header (mirrors the anusa.com.au bar: ANUSA blue + wordmark) ── */
     .site-header {
-      background: #1a2e6e;
+      background: #366BEF;
       border-bottom: none;
       padding: 0 1.5rem;
-      height: 52px;
+      height: 64px;
       display: flex;
       align-items: center;
+      gap: .9rem;
       flex-shrink: 0;
       z-index: 100;
     }
     .site-header .logo {
-      font-family: 'Roboto Slab', serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
+      display: flex;
+      align-items: center;
       text-decoration: none;
-      letter-spacing: -0.3px;
+      flex-shrink: 0;
+    }
+    /* The wordmark's outline is the same blue as the bar, so it reads as
+       white letters — exactly as it does on anusa.com.au. */
+    .site-header .logo img { height: 34px; width: auto; display: block; }
+    .site-header .site-name {
+      font-family: 'Roboto', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #fff;
+      letter-spacing: .01em;
+      padding-left: .9rem;
+      border-left: 1px solid rgba(255,255,255,.35);
+      line-height: 1.25;
+    }
+    @media (max-width: 640px) {
+      .site-header { height: 56px; padding: 0 1rem; gap: .6rem; }
+      .site-header .logo img { height: 26px; }
+      .site-header .site-name { font-size: .82rem; padding-left: .6rem; }
     }
 
     /* ── Filters bar ── */
@@ -106,9 +123,9 @@
       justify-content: space-between;
       transition: background .15s, color .15s;
     }
-    .meeting-heading:hover { background: #e8eaf0; color: #1a2e6e; }
+    .meeting-heading:hover { background: #E4EAFC; color: #1a2e6e; }
     .meeting-heading:hover .meeting-heading-arrow { opacity: 1; transform: translateX(2px); }
-    .meeting-heading.active { background: #e8eaf0; color: #1a2e6e; border-left: 3px solid #1a2e6e; }
+    .meeting-heading.active { background: #E4EAFC; color: #1a2e6e; border-left: 3px solid #1a2e6e; }
     .meeting-heading-arrow { font-size: 1rem; opacity: .4; transition: opacity .15s, transform .15s; }
     .meeting-heading.active .meeting-heading-arrow { opacity: 1; }
 
@@ -121,9 +138,9 @@
       align-items: flex-start;
       gap: .75rem;
     }
-    .decision-row:hover { background: #f5f6f9 }
+    .decision-row:hover { background: #F4F7FE }
     .decision-row { border-left: 3px solid transparent }
-    .decision-row.active { background: #eef0f7; border-left: 3px solid #1a2e6e }
+    .decision-row.active { background: #E9EFFD; border-left: 3px solid #1a2e6e }
 
     .row-id {
       font-size: .7rem;
@@ -190,7 +207,7 @@
       flex: 1;
       overflow-y: auto;
       padding: 2rem 2.5rem;
-      background: #f4f5f7;
+      background: #FFFBF3;
     }
 
     .detail-empty {
@@ -367,7 +384,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .back-btn:hover { background: #f5f6f9 }
+    .back-btn:hover { background: #F4F7FE }
 
     /* ── Meeting motion rows ── */
     .meeting-motion-row {
@@ -381,7 +398,7 @@
       transition: background .1s;
     }
     .meeting-motion-row:last-child { border-bottom: none; }
-    .meeting-motion-row:hover { background: #f5f6f9; }
+    .meeting-motion-row:hover { background: #F4F7FE; }
     .meeting-motion-row:hover .meeting-motion-arrow { opacity: 1; }
     .meeting-motion-arrow { font-size: .8rem; color: #1a2e6e; opacity: 0; transition: opacity .1s; margin-left: auto; flex-shrink: 0; }
 
@@ -411,7 +428,7 @@
 
       .detail-panel {
         padding: 0;
-        background: #fff;
+        background: #FFFBF3;
         overflow-y: visible;
       }
 
@@ -1154,21 +1171,24 @@ Please report this to https://github.com/markedjs/marked.`,t){let s="<p>An error
             <span class="meeting-motion-arrow">→</span>
           </div>`).join("")}
       </div>
-    </div>`,i.querySelectorAll(".js-motion-row").forEach(a=>{a.addEventListener("click",()=>{const o=e.find(r=>r.id===a.dataset.id);o&&n(o,a.dataset.meeting)})}),i}const T=document.getElementById("listPanel"),ve=document.getElementById("detailPanel"),Y=document.getElementById("detailBody"),D=document.getElementById("backBtn"),we=document.getElementById("filtersBar"),P=document.getElementById("searchInput"),Yn=document.getElementById("searchClear"),Ie=P.closest(".search-wrap");let U=[];const Oe=()=>U[U.length-1]??null,le=()=>window.innerWidth<=640;function Xn(){const t=U[U.length-2]??null;if(!t)D.textContent="← All motions";else if(t.type==="meeting"){const e=L[t.meetingDate];D.textContent="← "+(e?e.name:t.meetingDate)}else D.textContent="← "+t.decision.id+" "+t.decision.title}function H(){Xn();const t=U.length>0;le()?(T.classList.toggle("mobile-hidden",t),ve.classList.toggle("mobile-hidden",!t),we.classList.toggle("mobile-hidden",t)):(T.classList.remove("mobile-hidden"),ve.classList.remove("mobile-hidden"),we.classList.remove("mobile-hidden"))}window.addEventListener("resize",H);D.addEventListener("click",()=>{U.pop();const t=Oe();t?($e(t),R()):(Y.innerHTML='<div class="detail-empty">Select a motion to view details</div>',R()),H(),le()&&window.scrollTo(0,0)});function O(t){U.push(t),$e(t),R(),H(),le()&&window.scrollTo(0,0)}function $e(t){let e;if(t.type==="meeting"){const s=Q().find(i=>i.meeting===t.meetingDate);e=Qn(t.meetingDate,s?.decisions??[],{onDecisionClick:(i,a)=>O({type:"decision",meetingDate:a,decision:i})})}else{const n=Q().find(s=>s.meeting===t.meetingDate);e=Zn(t.decision,t.meetingDate,{onMeetingClick:s=>O({type:"meeting",meetingDate:s}),onDecisionClick:(s,i)=>O({type:"decision",meetingDate:i,decision:s}),decisions:n?.decisions||[]})}Y.innerHTML="",Y.appendChild(e)}function ei(){return P.value.trim().toLowerCase().replace(/[-\W]+/g," ").trim().split(/\s+/).filter(Boolean)}function Le(t){return" "+[t.id,t.title,t.mover,t.seconder,t.fullText].filter(Boolean).join(" ").toLowerCase().replace(/[-\W]+/g," ")+" "}function ti(t,e,n){return t.filter(s=>{if(!e.length)return!0;const i=Le(s);return n?i.includes(" "+e.join(" ")):e.every((a,o)=>o===e.length-1?i.includes(" "+a):i.includes(" "+a+" "))})}function ni(t){return t?t.type==="meeting"?"m/"+t.meetingDate:"d/"+t.meetingDate+"/"+t.decision.id:null}function R(){T.innerHTML="";const t=Q(),e=ni(Oe()),n=ei(),s=n.length>1&&t.some(a=>a.decisions.some(o=>Le(o).includes(" "+n.join(" "))));let i=!1;for(const{meeting:a,decisions:o}of t){const r=ti(o,n,s);if(!r.length)continue;i=!0;const c=L[a],l="m/"+a,u=document.createElement("div");u.className="meeting-heading"+(e===l?" active":""),u.innerHTML=`<span class="meeting-heading-name">${c?c.name:a}</span><span class="meeting-heading-arrow">›</span>`,u.addEventListener("click",()=>O({type:"meeting",meetingDate:a})),T.appendChild(u);for(const d of r){const h="d/"+a+"/"+d.id,f=document.createElement("div");f.className="decision-row"+(h===e?" active":""),f.innerHTML=`
+    </div>`,i.querySelectorAll(".js-motion-row").forEach(a=>{a.addEventListener("click",()=>{const o=e.find(r=>r.id===a.dataset.id);o&&n(o,a.dataset.meeting)})}),i}const T=document.getElementById("listPanel"),ve=document.getElementById("detailPanel"),Y=document.getElementById("detailBody"),D=document.getElementById("backBtn"),we=document.getElementById("filtersBar"),P=document.getElementById("searchInput"),Yn=document.getElementById("searchClear"),Ie=P.closest(".search-wrap");let U=[];const Oe=()=>U[U.length-1]??null,le=()=>window.innerWidth<=640;function Xn(){const t=U[U.length-2]??null;if(!t)D.textContent="← All decisions";else if(t.type==="meeting"){const e=L[t.meetingDate];D.textContent="← "+(e?e.name:t.meetingDate)}else D.textContent="← "+t.decision.id+" "+t.decision.title}function H(){Xn();const t=U.length>0;le()?(T.classList.toggle("mobile-hidden",t),ve.classList.toggle("mobile-hidden",!t),we.classList.toggle("mobile-hidden",t)):(T.classList.remove("mobile-hidden"),ve.classList.remove("mobile-hidden"),we.classList.remove("mobile-hidden"))}window.addEventListener("resize",H);D.addEventListener("click",()=>{U.pop();const t=Oe();t?($e(t),R()):(Y.innerHTML='<div class="detail-empty">Select a decision to view details.</div>',R()),H(),le()&&window.scrollTo(0,0)});function O(t){U.push(t),$e(t),R(),H(),le()&&window.scrollTo(0,0)}function $e(t){let e;if(t.type==="meeting"){const s=Q().find(i=>i.meeting===t.meetingDate);e=Qn(t.meetingDate,s?.decisions??[],{onDecisionClick:(i,a)=>O({type:"decision",meetingDate:a,decision:i})})}else{const n=Q().find(s=>s.meeting===t.meetingDate);e=Zn(t.decision,t.meetingDate,{onMeetingClick:s=>O({type:"meeting",meetingDate:s}),onDecisionClick:(s,i)=>O({type:"decision",meetingDate:i,decision:s}),decisions:n?.decisions||[]})}Y.innerHTML="",Y.appendChild(e)}function ei(){return P.value.trim().toLowerCase().replace(/[-\W]+/g," ").trim().split(/\s+/).filter(Boolean)}function Le(t){return" "+[t.id,t.title,t.mover,t.seconder,t.fullText].filter(Boolean).join(" ").toLowerCase().replace(/[-\W]+/g," ")+" "}function ti(t,e,n){return t.filter(s=>{if(!e.length)return!0;const i=Le(s);return n?i.includes(" "+e.join(" ")):e.every((a,o)=>o===e.length-1?i.includes(" "+a):i.includes(" "+a+" "))})}function ni(t){return t?t.type==="meeting"?"m/"+t.meetingDate:"d/"+t.meetingDate+"/"+t.decision.id:null}function R(){T.innerHTML="";const t=Q(),e=ni(Oe()),n=ei(),s=n.length>1&&t.some(a=>a.decisions.some(o=>Le(o).includes(" "+n.join(" "))));let i=!1;for(const{meeting:a,decisions:o}of t){const r=ti(o,n,s);if(!r.length)continue;i=!0;const c=L[a],l="m/"+a,u=document.createElement("div");u.className="meeting-heading"+(e===l?" active":""),u.innerHTML=`<span class="meeting-heading-name">${c?c.name:a}</span><span class="meeting-heading-arrow">›</span>`,u.addEventListener("click",()=>O({type:"meeting",meetingDate:a})),T.appendChild(u);for(const d of r){const h="d/"+a+"/"+d.id,f=document.createElement("div");f.className="decision-row"+(h===e?" active":""),f.innerHTML=`
         <div class="row-id">${d.id}</div>
         <div class="row-body">
           <div class="row-title">${d.title}</div>
           ${d.bloc?`<div class="row-meta">${Me("En bloc","badge-bloc")}</div>`:""}
-        </div>`,f.addEventListener("click",()=>O({type:"decision",meetingDate:a,decision:d})),T.appendChild(f)}}i||(T.innerHTML='<div class="no-results">No motions match your search.</div>')}P.addEventListener("input",()=>{Ie.classList.toggle("has-value",P.value.length>0),R()});Yn.addEventListener("click",()=>{P.value="",Ie.classList.remove("has-value"),P.focus(),R()});window.addEventListener("load",()=>{H(),R()});</script>
+        </div>`,f.addEventListener("click",()=>O({type:"decision",meetingDate:a,decision:d})),T.appendChild(f)}}i||(T.innerHTML='<div class="no-results">No decisions match your search.</div>')}P.addEventListener("input",()=>{Ie.classList.toggle("has-value",P.value.length>0),R()});Yn.addEventListener("click",()=>{P.value="",Ie.classList.remove("has-value"),P.focus(),R()});window.addEventListener("load",()=>{H(),R()});</script>
 </head>
 <body>
 
   <header class="site-header">
-    <a href="#" class="logo">SRC Policy Register</a>
+    <a href="https://anusa.com.au" class="logo" target="_blank" rel="noopener">
+      <img src="data:image/png;base64,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" alt="ANUSA">
+    </a>
+    <span class="site-name">SRC Decisions Register</span>
   </header>
 
   <div class="disclaimer-bar">
-    A record of motions <strong>passed</strong> by the ANUSA SRC. Unsuccessful motions, amendments and debate are not recorded here &mdash; see the official minutes, linked on every entry, for the complete record. For informational purposes only; this is not an official or legal record of meetings and may contain inaccuracies.
+    This tool records motions <strong>passed by the ANUSA Student Representative Council (SRC)</strong> only, in their amended form where applicable. It is <strong>not currently a record of all ANUSA policy</strong>, such as that passed at General Meetings. Unsuccessful motions, amendments and debate are also excluded. The official minutes are the authoritative record, and are linked on each entry. This page is informational only and may contain inaccuracies.
   </div>
 
   <div class="filters" id="filtersBar">
@@ -1183,7 +1203,7 @@ Please report this to https://github.com/markedjs/marked.`,t){let s="<p>An error
     <div class="detail-panel mobile-hidden" id="detailPanel">
       <button class="back-btn" id="backBtn">← All decisions</button>
       <div id="detailBody">
-        <div class="detail-empty">Select a meeting or decision to view details</div>
+        <div class="detail-empty">Select a meeting or decision to view details.</div>
       </div>
     </div>
   </div>

@@ -10,6 +10,8 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist',
+    // Inline the logo so the single-file build stays self-contained.
+    assetsInlineLimit: 100000,
     rollupOptions: {
       input: 'index.html'
     }

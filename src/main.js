@@ -23,7 +23,7 @@ const isMobile    = () => window.innerWidth <= 640;
 function updateBackBtn() {
   const prev = navStack[navStack.length - 2] ?? null;
   if (!prev) {
-    backBtn.textContent = '← All motions';
+    backBtn.textContent = '← All decisions';
   } else if (prev.type === 'meeting') {
     const meta = meetingMeta[prev.meetingDate];
     backBtn.textContent = '← ' + (meta ? meta.name : prev.meetingDate);
@@ -58,7 +58,7 @@ backBtn.addEventListener('click', () => {
     _paint(prev);
     renderList();
   } else {
-    detailBody.innerHTML = '<div class="detail-empty">Select a motion to view details</div>';
+    detailBody.innerHTML = '<div class="detail-empty">Select a decision to view details.</div>';
     renderList();
   }
   syncPanels();
@@ -168,7 +168,7 @@ function renderList() {
   }
 
   if (!anyResults) {
-    listPanel.innerHTML = '<div class="no-results">No motions match your search.</div>';
+    listPanel.innerHTML = '<div class="no-results">No decisions match your search.</div>';
   }
 }
 
