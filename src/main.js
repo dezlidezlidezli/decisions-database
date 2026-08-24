@@ -230,6 +230,17 @@ function renderList() {
   }
 }
 
+// ── Home link ─────────────────────────────────────────────────────────────────
+// Handled here rather than left to the href so the nav stack and history stay
+// in step with the URL.
+document.getElementById('homeLink')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (!navStack.length) return;
+  history.pushState({ stack: [], depth: 0 }, '', '#/');
+  applyStack([]);
+  if (isMobile()) window.scrollTo(0, 0);
+});
+
 // ── Search ────────────────────────────────────────────────────────────────────
 searchInput.addEventListener('input', () => {
   searchWrap.classList.toggle('has-value', searchInput.value.length > 0);

@@ -50,7 +50,9 @@
       padding-left: .9rem;
       border-left: 1px solid rgba(255,255,255,.35);
       line-height: 1.25;
+      text-decoration: none;
     }
+    .site-header .site-name:hover { text-decoration: underline; }
     @media (max-width: 640px) {
       .site-header { height: 56px; padding: 0 1rem; gap: .6rem; }
       .site-header .logo img { height: 26px; }
@@ -504,7 +506,7 @@
     <a href="https://anusa.com.au" class="logo" target="_blank" rel="noopener">
       <img src="./assets/anusa-logo.png" alt="ANUSA">
     </a>
-    <span class="site-name">SRC Decisions Register</span>
+    <a href="#/" class="site-name" id="homeLink">SRC Decisions Register</a>
   </header>
 
   <div class="disclaimer-bar">
