@@ -1,17 +1,15 @@
 {
   "name": "decisions-database",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A searchable public register of motions passed by the ANUSA Student Representative Council.",
+  "type": "module",
+  "private": true,
+  "license": "ISC",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "vite": "^7.0.6",
     "vite-plugin-singlefile": "^2.3.0"
